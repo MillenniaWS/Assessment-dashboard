@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Dashboard MWS</title>
+  <!-- Favicon / Tab Icon -->
+  <link rel="icon" type="image/png" href="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #F4F5F9; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+    
+    /* Print Stylesheet for Parent Report */
+    @media print {
+      body * { visibility: hidden; }
+      #printableParentReport, #printableParentReport * { visibility: visible; }
+      #printableParentReport { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="font-sans antialiased text-slate-800">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-60 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex z-20">
+      <div>
+        <!-- Logo & Branding -->
+        <div class="p-5 flex items-center space-x-3 border-b border-slate-100">
+          <img src="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx" 
+               onerror="this.onerror=null; this.src='https://via.placeholder.com/40/7C3AED/FFFFFF?text=MWS';" 
+               alt="Millennia World School Logo" 
+               class="w-8 h-8 object-contain rounded-lg">
+          <div>
+            <h1 class="font-extrabold text-slate-800 text-xs leading-tight">Millennia World School</h1>
+            <p class="text-[9px] text-brand-600 font-bold tracking-wider uppercase">Assessment Dashboard</p>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="px-3 space-y-1 mt-4">
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl bg-brand-50 text-brand-600 font-bold text-xs transition">
+            <i class="fa-solid fa-house text-sm"></i>
+            <span>Daily Assessment</span>
+          </button>
+          <button onclick="switchTab('attendance')" id="nav-attendance" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+            <i class="fa-solid fa-calendar-check text-sm"></i>
+            <span>Attendance Tracker</span>
+          </button>
+          <button onclick="switchTab('roster')" id="nav-roster" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+            <i class="fa-solid fa-users text-sm"></i>
+            <span>Students Roster</span>
+          </button>
+          <button onclick="switchTab('analytics')" id="nav-analytics" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+            <i class="fa-solid fa-chart-pie text-sm"></i>
+            <span>Progress Analytics</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Term & Data Sync Footer -->
+      <div class="p-3.5 m-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Select Academic Term</label>
+          <select id="termSelect" onchange="changeTerm()" class="w-full bg-white border border-slate-200 text-[11px] font-bold px-2.5 py-1.5 rounded-lg text-slate-700 focus:outline-none cursor-pointer">
+            <option value="Term 1" selected>Term 1 (Current)</option>
+            <option value="Term 2">Term 2 (Next)</option>
+          </select>
+        </div>
+
+        <div class="pt-2 border-t border-slate-200 flex justify-between items-center text-[10px]">
+          <button onclick="exportDataJSON()" class="text-brand-600 font-bold hover:underline"><i class="fa-solid fa-download mr-1"></i> Backup</button>
+          <label class="text-slate-600 font-bold hover:underline cursor-pointer">
+            <i class="fa-solid fa-upload mr-1"></i> Restore
+            <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTAINER -->
+    <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+
+      <!-- TOP HEADER -->
+      <header class="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <!-- Search Bar -->
+        <div class="relative w-full sm:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input type="text" id="searchInput" placeholder="Search student name..." class="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+        </div>
+
+        <!-- Teacher Account Switcher -->
+        <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+          <div class="flex flex-col items-end">
+            <div class="flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+              <i id="accountRoleIcon" class="fa-solid fa-user-lock text-brand-600"></i>
+              <span class="text-xs font-semibold text-slate-500">Logged in:</span>
+              <select id="teacherSelect" onchange="promptTeacherPasscode()" class="bg-transparent text-xs font-bold text-brand-700 focus:outline-none cursor-pointer">
+                <optgroup label="School Leadership">
+                  <option value="Principal">👑 Principal (Master Access)</option>
+                </optgroup>
+                <optgroup label="Djebel Chelia Homeroom">
+                  <option value="Tr Nanda" selected>Tr Nanda (Djebel Chelia)</option>
+                  <option value="Tr Afi">Tr Afi (Djebel Chelia)</option>
+                </optgroup>
+                <optgroup label="Snowdon Homeroom">
+                  <option value="Tr Widya">Tr Widya (Snowdon)</option>
+                  <option value="Tr Sindy">Tr Sindy (Snowdon)</option>
+                </optgroup>
+                <optgroup label="Mauna Kea Homeroom">
+                  <option value="Tr Yunda">Tr Yunda (Mauna Kea)</option>
+                  <option value="Tr Diya">Tr Diya (Mauna Kea)</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+
+          <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold border-2 border-brand-500 shadow-sm">
+            <span id="teacherAvatar">TN</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- CONTENT VIEWS CONTAINER -->
+      <main class="p-6 space-y-6">
+
+        <!-- VIEW 1: DASHBOARD / DAILY ASSESSMENT CARDS -->
+        <div id="view-dashboard-content" class="space-y-6">
+          
+          <!-- WELCOME BANNER -->
+          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden">
+            <div class="relative z-10 max-w-2xl">
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full" id="activeTermBadge">Term 1 Assessment</span>
+                <span id="homeroomBadge" class="text-xs font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full">Homeroom: Djebel Chelia</span>
+              </div>
+              <h2 id="welcomeGreeting" class="text-2xl sm:text-3xl font-extrabold mt-3">Hi Teacher! Glad to see you! 👋</h2>
+              <p class="text-brand-100 text-xs sm:text-sm mt-2 leading-relaxed">Record daily assessment rubrics (Emerging = 1, Exploring = 2, Thriving = 3), upload learning evidence, and track individual progress.</p>
+            </div>
+            <div class="absolute right-6 -bottom-6 opacity-20 text-9xl">🏫</div>
+          </div>
+
+          <!-- CONTROLS & FILTERS -->
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <!-- Class Tabs -->
+            <div class="flex flex-wrap gap-2">
+              <span class="text-xs font-bold text-slate-400 uppercase self-center mr-2">Assigned Class:</span>
+              <button onclick="filterClass('ALL')" id="btnClass-ALL" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-class="ALL">All Classes</button>
+              <button onclick="filterClass('MAUNA KEA')" id="btnClass-MAUNA KEA" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-class="MAUNA KEA">Mauna Kea</button>
+              <button onclick="filterClass('SNOWDON')" id="btnClass-SNOWDON" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-class="SNOWDON">Snowdon</button>
+              <button onclick="filterClass('DJEBEL CHELIA')" id="btnClass-DJEBEL CHELIA" class="class-tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-md shadow-brand-500/30 transition" data-class="DJEBEL CHELIA">Djebel Chelia</button>
+            </div>
+
+            <!-- Grade Level Filter -->
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-slate-400 uppercase">Grade:</span>
+              <select id="gradeFilter" class="bg-slate-100 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 text-slate-700 focus:outline-none cursor-pointer">
+                <option value="ALL">All Grades</option>
+                <option value="Pre K">Pre K</option>
+                <option value="K1">K1</option>
+                <option value="K2">K2</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- STATS SUMMARY CARDS -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-400">Total Students</p>
+                <h3 id="statTotalStudents" class="text-2xl font-extrabold text-slate-800 mt-1">0</h3>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-purple-50 text-brand-600 flex items-center justify-center text-xl"><i class="fa-solid fa-child"></i></div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-400">Daily Assessments Filed</p>
+                <h3 id="statTotalLogs" class="text-2xl font-extrabold text-emerald-600 mt-1">0</h3>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl"><i class="fa-solid fa-clipboard-check"></i></div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-400">Thriving Rate</p>
+                <h3 id="statThrivingRate" class="text-2xl font-extrabold text-indigo-600 mt-1">0%</h3>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl"><i class="fa-solid fa-seedling"></i></div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-400">Active Students with Gaps</p>
+                <h3 id="statGapsCount" class="text-2xl font-extrabold text-amber-600 mt-1">0</h3>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl"><i class="fa-solid fa-circle-exclamation"></i></div>
+            </div>
+          </div>
+
+          <!-- STUDENT GRID -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-extrabold text-slate-800 text-lg">Student Daily Assessment Cards</h3>
+              <span id="showingCount" class="text-xs text-slate-500 font-semibold">Showing 0 students</span>
+            </div>
+
+            <div id="studentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <!-- Cards rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: ATTENDANCE TRACKER -->
+        <div id="view-attendance-content" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 class="text-xl font-extrabold text-slate-800">Daily Attendance Tracker</h3>
+              <p class="text-xs text-slate-500 mt-1">Mark student attendance class by class: Present, Sick, Late, or Absent.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Attendance Date</label>
+                <input type="date" id="att_date_picker" onchange="loadAttendanceForSelectedDate()" class="bg-slate-100 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 text-slate-700 focus:outline-none">
+              </div>
+              <button onclick="markAllPresent()" class="self-end px-4 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs transition">
+                <i class="fa-solid fa-check-double mr-1.5"></i> Mark Class Present
+              </button>
+              <button onclick="openMonthlyRecapModal()" class="self-end px-4 py-2.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-xs transition">
+                <i class="fa-solid fa-chart-line mr-1.5"></i> Monthly Recap
+              </button>
+              <button onclick="saveAttendance()" class="self-end px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/30 transition">
+                <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save Attendance
+              </button>
+            </div>
+          </div>
+
+          <!-- Attendance Class Tabs -->
+          <div class="flex items-center space-x-2 bg-white p-2 rounded-2xl border border-slate-200 w-fit">
+            <span class="text-xs font-bold text-slate-400 uppercase px-3">Class View:</span>
+            <button onclick="filterAttendanceClass('MAUNA KEA')" id="attTab-MAUNAKEA" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 transition">Mauna Kea</button>
+            <button onclick="filterAttendanceClass('SNOWDON')" id="attTab-SNOWDON" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 transition">Snowdon</button>
+            <button onclick="filterAttendanceClass('DJEBEL CHELIA')" id="attTab-DJEBELCHELIA" class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-sm transition">Djebel Chelia</button>
+          </div>
+
+          <!-- Attendance Metric Cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold text-slate-400">Present</p>
+                <h4 id="att_count_present" class="text-xl font-extrabold text-emerald-600 mt-0.5">0</h4>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm"><i class="fa-solid fa-user-check"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold text-slate-400">Sick</p>
+                <h4 id="att_count_sick" class="text-xl font-extrabold text-blue-600 mt-0.5">0</h4>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm"><i class="fa-solid fa-head-side-cough"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold text-slate-400">Late</p>
+                <h4 id="att_count_late" class="text-xl font-extrabold text-amber-600 mt-0.5">0</h4>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm"><i class="fa-solid fa-clock"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <p class="text-[11px] font-bold text-slate-400">Absent</p>
+                <h4 id="att_count_absent" class="text-xl font-extrabold text-rose-600 mt-0.5">0</h4>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm"><i class="fa-solid fa-user-xmark"></i></div>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between col-span-2 lg:col-span-1">
+              <div>
+                <p class="text-[11px] font-bold text-slate-400">Attendance Rate</p>
+                <h4 id="att_rate_percent" class="text-xl font-extrabold text-brand-600 mt-0.5">0%</h4>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-sm"><i class="fa-solid fa-percent"></i></div>
+            </div>
+          </div>
+
+          <!-- Attendance Table View -->
+          <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider">
+                    <th class="py-3 px-4">Student Name</th>
+                    <th class="py-3 px-4">Class</th>
+                    <th class="py-3 px-4">Grade</th>
+                    <th class="py-3 px-4 text-center">Status Selection</th>
+                    <th class="py-3 px-4">Notes / Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="attendanceTableBody" class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                  <!-- Attendance rows generated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: STUDENTS ROSTER VIEW -->
+        <div id="view-roster-content" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <h3 class="text-xl font-extrabold text-slate-800 mb-2">Class Roster & History Summary</h3>
+            <p class="text-xs text-slate-500 mb-6">Complete list of students with total logs recorded and primary developmental status.</p>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider">
+                    <th class="py-3 px-4">Student Name</th>
+                    <th class="py-3 px-4">Class</th>
+                    <th class="py-3 px-4">Grade Level</th>
+                    <th class="py-3 px-4">Total Daily Logs</th>
+                    <th class="py-3 px-4">Latest Rubric Status</th>
+                    <th class="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="rosterTableBody" class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                  <!-- Generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 4: PROGRESS ANALYTICS VIEW -->
+        <div id="view-analytics-content" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 class="text-xl font-extrabold text-slate-800">Development Domain Performance Analytics</h3>
+                <p class="text-xs text-slate-500 mt-1">Average Rubric Scores (1 - 3) across Numeracy, Literacy, Behavior, & Motor domains.</p>
+              </div>
+
+              <!-- Score Indicator Legend -->
+              <div class="flex items-center space-x-4 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-xs font-bold">
+                <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span class="text-slate-600">Low (&lt;1.8)</span></div>
+                <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span class="text-slate-600">Middle (1.8-2.4)</span></div>
+                <div class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span class="text-slate-600">High (&ge;2.5)</span></div>
+              </div>
+            </div>
+
+            <div class="w-full h-80">
+              <canvas id="domainAnalyticsChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- PASSCODE PIN SECURITY MODAL -->
+  <div id="passcodeModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4">
+      <div class="w-14 h-14 bg-brand-100 text-brand-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">
+        🔒
+      </div>
+      <div>
+        <h3 id="pinModalTeacherName" class="font-extrabold text-slate-800 text-lg">Enter Teacher Passcode</h3>
+        <p class="text-xs text-slate-400 mt-1">Please type birthday PIN to unlock profile.</p>
+      </div>
+
+      <input type="password" id="inp_passcode" maxlength="4" placeholder="••••" class="w-3/4 text-center text-2xl font-mono tracking-widest p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50">
+      
+      <div id="passcodeError" class="text-xs font-bold text-rose-500 hidden">Incorrect PIN Code! Access Denied.</div>
+
+      <div class="flex space-x-2 pt-2">
+        <button onclick="cancelPasscode()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition">Cancel</button>
+        <button onclick="verifyPasscode()" class="w-1/2 py-2.5 rounded-xl bg-brand-600 text-white font-bold text-xs hover:bg-brand-700 transition">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MONTHLY ATTENDANCE RECAP MODAL -->
+  <div id="monthlyRecapModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 flex flex-col p-6 space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-800">Monthly Attendance Recap Report</h3>
+          <p class="text-xs text-slate-400 mt-0.5" id="recapClassSubtitle">Class Attendance Summary</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <input type="month" id="recap_month_picker" onchange="renderMonthlyRecapTable()" class="bg-slate-100 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 text-slate-700 focus:outline-none">
+          <button onclick="window.print()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"><i class="fa-solid fa-print mr-1"></i> Print</button>
+          <button onclick="closeMonthlyRecapModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 text-xs text-slate-400 uppercase tracking-wider">
+              <th class="py-3 px-3">Student Name</th>
+              <th class="py-3 px-3">Grade</th>
+              <th class="py-3 px-3 text-center text-emerald-600">Present</th>
+              <th class="py-3 px-3 text-center text-blue-600">Sick</th>
+              <th class="py-3 px-3 text-center text-amber-600">Late</th>
+              <th class="py-3 px-3 text-center text-rose-600">Absent</th>
+              <th class="py-3 px-3 text-center">Monthly Rate</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyRecapTableBody" class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+            <!-- Recap rows generated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DAILY ASSESSMENT & INDIVIDUAL PROGRESS MODAL -->
+  <div id="assessmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div class="flex items-center space-x-3">
+          <div id="modalAvatar" class="w-12 h-12 rounded-2xl bg-brand-100 text-brand-600 font-extrabold flex items-center justify-center text-lg">
+            AA
+          </div>
+          <div>
+            <h3 id="modalStudentName" class="font-extrabold text-slate-800 text-xl">Student Name</h3>
+            <div class="flex space-x-2 mt-0.5">
+              <span id="modalClassBadge" class="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold whitespace-nowrap">Class</span>
+              <span id="modalLevelBadge" class="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-bold whitespace-nowrap">Level</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <button onclick="openParentReportModal()" class="px-3.5 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>Print Parent Report</span>
+          </button>
+          <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 hover:bg-slate-200 flex items-center justify-center transition">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Form Entry Column (5 Cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-brand-50 p-4 rounded-2xl border border-brand-100 flex items-center justify-between">
+            <h4 class="font-bold text-brand-800 text-sm"><i class="fa-solid fa-pen-to-square mr-1.5"></i> Daily Entry</h4>
+            <span id="formTermTag" class="text-xs bg-brand-600 text-white font-bold px-2.5 py-0.5 rounded-full">Term 1</span>
+          </div>
+
+          <form id="dailyAssessmentForm" class="space-y-4" onsubmit="saveDailyAssessment(event)">
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Assessment Date</label>
+                <input type="date" id="inp_date" required class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1">Subject / Domain</label>
+                <select id="inp_subject" required class="w-full text-xs font-semibold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  <option value="Numeracy">🔢 Numeracy</option>
+                  <option value="Literacy Bahasa">🇮🇩 Literacy Bahasa</option>
+                  <option value="Literacy English">🇬🇧 Literacy English</option>
+                  <option value="Behaviour">⭐ Behaviour</option>
+                  <option value="Social Emotional">🤝 Social Emotional</option>
+                  <option value="Fine Motor">✏️ Fine Motor</option>
+                  <option value="Gross Motor">🏃 Gross Motor</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Learning Objective (LO) Today</label>
+              <input type="text" id="inp_lo" required placeholder="e.g. Able to count objects 1-10 or write letter A" class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">Rubric Score Level</label>
+              <div class="grid grid-cols-3 gap-2">
+                <label class="cursor-pointer">
+                  <input type="radio" name="rubricScore" value="1" required class="peer hidden">
+                  <div class="p-2 text-center rounded-xl border border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-700 transition">
+                    <p class="text-xs font-extrabold">1 - Emerging</p>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="rubricScore" value="2" class="peer hidden">
+                  <div class="p-2 text-center rounded-xl border border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-700 transition">
+                    <p class="text-xs font-extrabold">2 - Exploring</p>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="rubricScore" value="3" class="peer hidden">
+                  <div class="p-2 text-center rounded-xl border border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition">
+                    <p class="text-xs font-extrabold">3 - Thriving</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Teacher's Observation Comments</label>
+              <textarea id="inp_comments" rows="2" placeholder="Write specific observations..." class="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-amber-600 mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Student's Gaps</label>
+              <textarea id="inp_gaps" rows="2" placeholder="Identify specific gaps or support needed..." class="w-full text-xs p-2.5 rounded-xl border border-amber-200 bg-amber-50/30 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+            </div>
+
+            <!-- PHOTO EVIDENCE ATTACHMENT FIELD -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <label class="block text-xs font-bold text-slate-700"><i class="fa-solid fa-camera text-brand-600 mr-1"></i> Learning Evidence (Photo/Drive Link)</label>
+              <input type="file" id="inp_evidence_file" accept="image/*" onchange="previewUploadedFile(event)" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-100 file:text-brand-700 hover:file:bg-brand-200 cursor-pointer">
+              <div class="text-[10px] text-slate-400 font-bold text-center">OR</div>
+              <input type="url" id="inp_evidence_url" placeholder="Paste Google Drive / Photo URL..." class="w-full text-xs p-2 rounded-lg border border-slate-200 focus:outline-none">
+              <div id="evidencePreviewBox" class="hidden mt-2 relative">
+                <img id="evidencePreviewImg" src="" alt="Evidence Preview" class="h-20 w-full object-cover rounded-lg border border-slate-200">
+                <span class="absolute top-1 right-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">Preview</span>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-lg shadow-brand-500/30 transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-plus"></i>
+              <span>Save Daily Assessment Log</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Student Progress Charts & History Column (7 Cols) -->
+        <div class="lg:col-span-7 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-6 space-y-6">
+          
+          <!-- CHARTS GRID (Radar + Growth Trajectory) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Radar Chart -->
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div class="flex items-center justify-between mb-1">
+                <h4 class="font-bold text-slate-800 text-[11px]"><i class="fa-solid fa-chart-radar text-brand-600 mr-1"></i> Domain Radar</h4>
+                <span class="text-[9px] bg-brand-100 text-brand-700 font-extrabold px-1.5 py-0.5 rounded">Mastery</span>
+              </div>
+              <div class="w-full h-40 relative">
+                <canvas id="studentIndividualChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Growth Trajectory Line Chart -->
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div class="flex items-center justify-between mb-1">
+                <h4 class="font-bold text-slate-800 text-[11px]"><i class="fa-solid fa-chart-line text-emerald-600 mr-1"></i> Growth Trajectory</h4>
+                <span class="text-[9px] bg-emerald-100 text-emerald-700 font-extrabold px-1.5 py-0.5 rounded">Time-Series</span>
+              </div>
+              <div class="w-full h-40 relative">
+                <canvas id="studentGrowthLineChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- DAILY LOGS HISTORY WITH EVIDENCE -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-slate-800 text-xs"><i class="fa-solid fa-clock-rotate-left mr-1.5 text-brand-600"></i> Daily Logs & Evidence</h4>
+              <span id="logHistoryCount" class="text-xs text-slate-400 font-semibold">0 logs recorded</span>
+            </div>
+
+            <div id="modalLogsList" class="space-y-3 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+              <!-- Logs list rendered dynamically -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINTABLE PARENT PROGRESS REPORT MODAL -->
+  <div id="parentReportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 p-8 space-y-6">
+      
+      <!-- Report Header Controls (Hidden on Print) -->
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 no-print">
+        <span class="text-xs font-bold text-slate-400 uppercase">Parent Progress Report Preview</span>
+        <div class="flex space-x-2">
+          <button onclick="window.print()" class="px-4 py-2 bg-brand-600 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/30 hover:bg-brand-700 transition">
+            <i class="fa-solid fa-print mr-1.5"></i> Print / Save as PDF
+          </button>
+          <button onclick="closeParentReportModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- PRINT CONTAINER CONTENT -->
+      <div id="printableParentReport" class="space-y-6 p-2 bg-white">
+        <!-- School Header -->
+        <div class="flex items-center justify-between border-b-2 border-brand-600 pb-4">
+          <div class="flex items-center space-x-3">
+            <img src="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx" 
+                 onerror="this.onerror=null; this.src='https://via.placeholder.com/40/7C3AED/FFFFFF?text=MWS';" 
+                 alt="Millennia World School Logo" 
+                 class="w-12 h-12 object-contain">
+            <div>
+              <h2 class="font-extrabold text-slate-800 text-lg">Millennia World School</h2>
+              <p class="text-xs text-brand-600 font-bold uppercase tracking-wider">Early Years Development Progress Report</p>
+            </div>
+          </div>
+          <div class="text-right text-xs font-semibold text-slate-500">
+            <p id="rptTermTag" class="font-extrabold text-slate-800">Term 1</p>
+            <p>Academic Year 2026</p>
+          </div>
+        </div>
+
+        <!-- Student Meta Box -->
+        <div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs font-semibold">
+          <div><span class="text-slate-400 block text-[10px] uppercase">Student Name:</span> <span id="rptStudentName" class="text-slate-800 font-extrabold text-sm">-</span></div>
+          <div><span class="text-slate-400 block text-[10px] uppercase">Homeroom Class:</span> <span id="rptStudentClass" class="text-slate-800 font-bold">-</span></div>
+          <div><span class="text-slate-400 block text-[10px] uppercase">Grade Level:</span> <span id="rptStudentLevel" class="text-slate-800 font-bold">-</span></div>
+        </div>
+
+        <!-- Radar Mastery Summary -->
+        <div class="border border-slate-200 p-4 rounded-2xl">
+          <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider mb-2">Developmental Domain Mastery</h4>
+          <div class="w-full h-52 relative">
+            <canvas id="rptRadarChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Teacher's Progress Summary & Gaps -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Teacher Observation & Individual Growth Notes</h4>
+          <div id="rptObservationList" class="space-y-2 text-xs">
+            <!-- Dynamic report observations -->
+          </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="pt-8 border-t border-slate-200 grid grid-cols-2 text-center text-xs font-bold text-slate-600">
+          <div>
+            <p class="mb-12">Homeroom Teacher</p>
+            <p id="rptTeacherSign" class="underline font-extrabold text-slate-800">(__________________)</p>
+          </div>
+          <div>
+            <p class="mb-12">School Principal</p>
+            <p class="underline font-extrabold text-slate-800">Principal MWS</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Security Passcodes with Teacher Birthdays (DDMM)
+    const teacherSecurity = {
+      "Principal": { pass: "9999", class: "ALL", role: "Principal" },
+      "Tr Nanda": { pass: "1801", class: "DJEBEL CHELIA", role: "Teacher" },
+      "Tr Afi": { pass: "0805", class: "DJEBEL CHELIA", role: "Teacher" },
+      "Tr Widya": { pass: "1708", class: "SNOWDON", role: "Teacher" },
+      "Tr Sindy": { pass: "1304", class: "SNOWDON", role: "Teacher" },
+      "Tr Yunda": { pass: "2910", class: "MAUNA KEA", role: "Teacher" },
+      "Tr Diya": { pass: "0506", class: "MAUNA KEA", role: "Teacher" }
+    };
+
+    // Initial Student Dataset
+    const rawStudents = [
+      // MAUNA KEA
+      { name: "Aelianna Madeena Mecca (Anna)", class: "MAUNA KEA", level: "Pre K" },
+      { name: "Chellua Inaya Limma (Ua)", class: "MAUNA KEA", level: "Pre K" },
+      { name: "Zayyan Archie Wibowo", class: "MAUNA KEA", level: "Pre K" },
+      { name: "Ken Lyon Amranareswara", class: "MAUNA KEA", level: "Pre K" },
+      { name: "Sashika Leina Savrinadeya (Ecik)", class: "MAUNA KEA", level: "K1" },
+      { name: "Gamila Rastika Shazani", class: "MAUNA KEA", level: "K1" },
+      { name: "Janna Alnaira Li Adami", class: "MAUNA KEA", level: "K1" },
+      { name: "Ganesha Cipta Maheswara", class: "MAUNA KEA", level: "K1" },
+      { name: "Cavero Aydan Ranindra", class: "MAUNA KEA", level: "K1" },
+      { name: "Rajendra Malaka Nawasena", class: "MAUNA KEA", level: "K1" },
+      { name: "Tavisha Lee Moxie (Cici)", class: "MAUNA KEA", level: "K1" },
+      { name: "Luzio Satoru Hanan (Zio)", class: "MAUNA KEA", level: "K2" },
+      { name: "Marco Tama Anderson Simanjutak", class: "MAUNA KEA", level: "K2" },
+      { name: "Zavier Akhtar Rayyan", class: "MAUNA KEA", level: "K2" },
+      { name: "Alisha Kalyani Rahelia (Sha)", class: "MAUNA KEA", level: "K2" },
+      { name: "Chloe Adhel Tersya", class: "MAUNA KEA", level: "K2" },
+      { name: "Belvrysa Dawanas (Icha)", class: "MAUNA KEA", level: "K2" },
+      { name: "Assa Putra Wicaksono", class: "MAUNA KEA", level: "K2" },
+      { name: "Sharif Mohamed Ayad", class: "MAUNA KEA", level: "K2" },
+      { name: "Muhammad Raffasya Adhryan Alfarizi", class: "MAUNA KEA", level: "K2" },
+      { name: "Xerianne Kyara Siddiq", class: "MAUNA KEA", level: "K2" },
+      { name: "Marisa Khaylaysa Basri", class: "MAUNA KEA", level: "K2" },
+
+      // SNOWDON
+      { name: "Muhammad Shaka Paramatha Pandita", class: "SNOWDON", level: "Pre K" },
+      { name: "Marilla Una", class: "SNOWDON", level: "Pre K" },
+      { name: "Reiga Akmanata Pulungan", class: "SNOWDON", level: "Pre K" },
+      { name: "Megumi Putri", class: "SNOWDON", level: "Pre K" },
+      { name: "Sanvi Gia Hosea", class: "SNOWDON", level: "K1" },
+      { name: "Jahan Yuvraag", class: "SNOWDON", level: "K1" },
+      { name: "Nafesia Faizah Fihir", class: "SNOWDON", level: "K1" },
+      { name: "Arkatama Misha Alsaki", class: "SNOWDON", level: "K1" },
+      { name: "Elshanum Xavia Arruvi (Shanum)", class: "SNOWDON", level: "K1" },
+      { name: "Eshma Difatya Aqila", class: "SNOWDON", level: "K1" },
+      { name: "Rainnara Maliq Akamai", class: "SNOWDON", level: "K1" },
+      { name: "Harsha Daniyal Hanendra", class: "SNOWDON", level: "K1" },
+      { name: "Arellyn Raizelle Sibuea", class: "SNOWDON", level: "K2" },
+      { name: "Serenata Svara Hati (Rena)", class: "SNOWDON", level: "K2" },
+      { name: "Galan Ajda Fayyadh", class: "SNOWDON", level: "K2" },
+      { name: "Halwatuzahra Queen Rahma Alesha", class: "SNOWDON", level: "K2" },
+      { name: "Filippo Kennovara Subagyo", class: "SNOWDON", level: "K2" },
+      { name: "Aleena Anaviya Alfaiz", class: "SNOWDON", level: "K2" },
+      { name: "Shaqeena Aresha Athar", class: "SNOWDON", level: "K2" },
+      { name: "Brielle Calandra Sinulingga", class: "SNOWDON", level: "K2" },
+      { name: "Emilia Saira Asril", class: "SNOWDON", level: "K2" },
+      { name: "Lavanya Divya Jabar", class: "SNOWDON", level: "K2" },
+
+      // DJEBEL CHELIA
+      { name: "Arvand Arkhanza Adam", class: "DJEBEL CHELIA", level: "Pre K" },
+      { name: "Raifa yumna hidayat", class: "DJEBEL CHELIA", level: "Pre K" },
+      { name: "Daaniyaal Eiji Jabr (Niyaal)", class: "DJEBEL CHELIA", level: "Pre K" },
+      { name: "Aisyah Shailene Hardian", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Falah Davanka Rusyid", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Rafalea Nasheka Hasna (Lea)", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Inaya Mahira Hasna (Naya)", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Alisha Amaranara Hidayat", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Shaqir Mohamed Ayed (Shiko)", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Muhammad Kaiandra Zayn Rahman", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Malaka Askara Rumi (Kazu)", class: "DJEBEL CHELIA", level: "K1" },
+      { name: "Atharrazka Muhammad Adzafa (Razka)", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Indah Nyala Aruna", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Elliana Uli Sitorus (Nana)", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Michaela Stacy Botshaft Lubis", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Najma Haza Li Adami", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Milikena Kalani Maryam (Mina)", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Isvara Kinandari", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Skylar Raelia Effans", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Nolan Ezekiel Wiratomo", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Bhre Redana Kertabhumi (Bhumi)", class: "DJEBEL CHELIA", level: "K2" },
+      { name: "Kyra Amarantine Saphira", class: "DJEBEL CHELIA", level: "K2" }
+    ];
+
+    let students = rawStudents.map((s, i) => ({ id: i + 1, ...s }));
+    let dailyLogs = JSON.parse(localStorage.getItem('mws_daily_logs')) || [];
+    let attendanceDB = JSON.parse(localStorage.getItem('mws_attendance_db')) || {};
+
+    // App State
+    let activeTeacher = 'Tr Nanda';
+    let previousTeacher = 'Tr Nanda';
+    let activeClass = 'DJEBEL CHELIA';
+    let attendanceClass = 'DJEBEL CHELIA';
+    let activeGrade = 'ALL';
+    let searchQuery = '';
+    let currentTerm = 'Term 1';
+    let selectedStudentId = null;
+    let analyticsChartInstance = null;
+    let studentIndividualChartInstance = null;
+    let studentGrowthLineChartInstance = null;
+    let rptRadarChartInstance = null;
+    let uploadedEvidenceBase64 = '';
+    let currentAttendanceState = {};
+
+    // DOM Elements
+    const studentsGrid = document.getElementById('studentsGrid');
+    const teacherSelect = document.getElementById('teacherSelect');
+    const teacherAvatar = document.getElementById('teacherAvatar');
+    const welcomeGreeting = document.getElementById('welcomeGreeting');
+    const homeroomBadge = document.getElementById('homeroomBadge');
+    const termSelect = document.getElementById('termSelect');
+    const activeTermBadge = document.getElementById('activeTermBadge');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById('inp_date').value = todayStr;
+      document.getElementById('att_date_picker').value = todayStr;
+      document.getElementById('recap_month_picker').value = todayStr.substring(0, 7);
+
+      applyTeacherProfile('Tr Nanda');
+
+      // Search & Filters
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        searchQuery = e.target.value.toLowerCase();
+        renderStudents();
+      });
+      document.getElementById('gradeFilter').addEventListener('change', (e) => {
+        activeGrade = e.target.value;
+        renderStudents();
+      });
+    });
+
+    // Passcode Security Prompt
+    function promptTeacherPasscode() {
+      const selected = teacherSelect.value;
+      if (selected === activeTeacher) return;
+
+      document.getElementById('pinModalTeacherName').textContent = `Enter PIN for ${selected}`;
+      document.getElementById('inp_passcode').value = '';
+      document.getElementById('passcodeError').classList.add('hidden');
+      document.getElementById('passcodeModal').classList.remove('hidden');
+      document.getElementById('inp_passcode').focus();
+    }
+
+    function verifyPasscode() {
+      const selected = teacherSelect.value;
+      const enteredPin = document.getElementById('inp_passcode').value;
+      const sec = teacherSecurity[selected];
+
+      if (sec && enteredPin === sec.pass) {
+        document.getElementById('passcodeModal').classList.add('hidden');
+        previousTeacher = activeTeacher;
+        activeTeacher = selected;
+        applyTeacherProfile(selected);
+      } else {
+        document.getElementById('passcodeError').classList.remove('hidden');
+      }
+    }
+
+    function cancelPasscode() {
+      teacherSelect.value = activeTeacher;
+      document.getElementById('passcodeModal').classList.add('hidden');
+    }
+
+    function applyTeacherProfile(tName) {
+      const sec = teacherSecurity[tName];
+      const initials = tName === 'Principal' ? 'HQ' : tName.split(' ').map(n => n[0]).join('');
+      teacherAvatar.textContent = initials;
+      welcomeGreeting.textContent = `Hi ${tName}! Glad to see you! 👋`;
+
+      if (sec.role === 'Principal') {
+        homeroomBadge.textContent = "👑 Principal Access (All Classes)";
+        homeroomBadge.className = "text-xs font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full";
+        document.getElementById('accountRoleIcon').className = "fa-solid fa-crown text-amber-500";
+        enableAllClassButtons();
+        filterClass('ALL');
+        filterAttendanceClass('DJEBEL CHELIA');
+      } else {
+        homeroomBadge.textContent = `Homeroom: ${sec.class}`;
+        homeroomBadge.className = "text-xs font-bold bg-purple-200 text-purple-900 px-3 py-1 rounded-full";
+        document.getElementById('accountRoleIcon').className = "fa-solid fa-user-shield text-brand-600";
+        restrictClassButtonsTo(sec.class);
+        filterClass(sec.class);
+        filterAttendanceClass(sec.class);
+      }
+    }
+
+    function restrictClassButtonsTo(allowedClass) {
+      ['ALL', 'MAUNA KEA', 'SNOWDON', 'DJEBEL CHELIA'].forEach(c => {
+        const btn = document.getElementById(`btnClass-${c}`);
+        if (btn) {
+          if (c === allowedClass) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-40', 'cursor-not-allowed');
+          } else {
+            btn.disabled = true;
+            btn.classList.add('opacity-40', 'cursor-not-allowed');
+          }
+        }
+      });
+    }
+
+    function enableAllClassButtons() {
+      ['ALL', 'MAUNA KEA', 'SNOWDON', 'DJEBEL CHELIA'].forEach(c => {
+        const btn = document.getElementById(`btnClass-${c}`);
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('opacity-40', 'cursor-not-allowed');
+        }
+      });
+    }
+
+    function changeTerm() {
+      currentTerm = termSelect.value;
+      activeTermBadge.textContent = `${currentTerm} Assessment`;
+      renderStudents();
+    }
+
+    function switchTab(tabName) {
+      const tabs = ['dashboard', 'attendance', 'roster', 'analytics'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`nav-${t}`);
+        const content = document.getElementById(`view-${t}-content`);
+        if (t === tabName) {
+          btn.className = "w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl bg-brand-50 text-brand-600 font-bold text-xs transition";
+          content.classList.remove('hidden');
+        } else {
+          btn.className = "w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition";
+          content.classList.add('hidden');
+        }
+      });
+
+      if (tabName === 'attendance') loadAttendanceForSelectedDate();
+      if (tabName === 'roster') renderRosterTable();
+      if (tabName === 'analytics') renderAnalyticsChart();
+    }
+
+    function filterClass(className) {
+      activeClass = className;
+      document.querySelectorAll('.class-tab-btn').forEach(btn => {
+        if (btn.dataset.class === className) {
+          btn.className = "class-tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-md shadow-brand-500/30 transition";
+        } else {
+          btn.className = "class-tab-btn px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+        }
+      });
+      renderStudents();
+    }
+
+    function filterAttendanceClass(className) {
+      attendanceClass = className;
+      ['MAUNAKEA', 'SNOWDON', 'DJEBELCHELIA'].forEach(c => {
+        const btn = document.getElementById(`attTab-${c}`);
+        const formattedName = c === 'MAUNAKEA' ? 'MAUNA KEA' : c === 'SNOWDON' ? 'SNOWDON' : 'DJEBEL CHELIA';
+        if (formattedName === className) {
+          btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-sm transition";
+        } else {
+          btn.className = "px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+        }
+      });
+      loadAttendanceForSelectedDate();
+    }
+
+    function getRubricBadge(score) {
+      if (score === 3) return `<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold text-[10px]">Thriving (3)</span>`;
+      if (score === 2) return `<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-bold text-[10px]">Exploring (2)</span>`;
+      return `<span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md font-bold text-[10px]">Emerging (1)</span>`;
+    }
+
+    function renderStudents() {
+      let filtered = students.filter(s => {
+        const matchesClass = activeClass === 'ALL' || s.class === activeClass;
+        const matchesGrade = activeGrade === 'ALL' || s.level === activeGrade;
+        const matchesSearch = s.name.toLowerCase().includes(searchQuery);
+        return matchesClass && matchesGrade && matchesSearch;
+      });
+
+      const termLogs = dailyLogs.filter(l => l.term === currentTerm);
+
+      document.getElementById('statTotalStudents').textContent = filtered.length;
+      document.getElementById('statTotalLogs').textContent = termLogs.length;
+
+      const thrivingLogs = termLogs.filter(l => l.score === 3).length;
+      const thrivingRate = termLogs.length > 0 ? Math.round((thrivingLogs / termLogs.length) * 100) : 0;
+      document.getElementById('statThrivingRate').textContent = `${thrivingRate}%`;
+
+      const studentsWithGaps = new Set(termLogs.filter(l => l.gaps && l.gaps.trim().length > 0 && l.gaps.toLowerCase() !== 'none').map(l => l.studentId)).size;
+      document.getElementById('statGapsCount').textContent = studentsWithGaps;
+
+      document.getElementById('showingCount').textContent = `Showing ${filtered.length} students`;
+
+      studentsGrid.innerHTML = '';
+      if (filtered.length === 0) {
+        studentsGrid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-medium">No students found matching current filters.</div>`;
+        return;
+      }
+
+      filtered.forEach(s => {
+        const sLogs = termLogs.filter(l => l.studentId === s.id);
+        const lastLog = sLogs[sLogs.length - 1];
+        const initials = s.name.substring(0, 2).toUpperCase();
+
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between group";
+        
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 font-extrabold flex items-center justify-center text-xs group-hover:bg-brand-600 group-hover:text-white transition">
+                  ${initials}
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm leading-snug line-clamp-1" title="${s.name}">${s.name}</h4>
+                  <p class="text-[11px] text-slate-400 font-semibold">${s.class}</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 whitespace-nowrap inline-block">${s.level}</span>
+            </div>
+
+            <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="flex items-center justify-between text-[11px] mb-1">
+                <span class="font-bold text-slate-500">Latest Log:</span>
+                ${lastLog ? getRubricBadge(lastLog.score) : '<span class="text-slate-400">No entries</span>'}
+              </div>
+              <p class="text-xs text-slate-700 font-semibold truncate">${lastLog ? `${lastLog.subject}: ${lastLog.lo}` : 'Click below to record daily assessment.'}</p>
+              ${lastLog && lastLog.gaps && lastLog.gaps.toLowerCase() !== 'none' ? `<p class="text-[10px] text-amber-600 font-medium mt-1 truncate"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Gap: ${lastLog.gaps}</p>` : ''}
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-medium">${sLogs.length} logs in ${currentTerm}</span>
+            <button onclick="openAssessmentModal(${s.id})" class="px-3 py-1.5 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition flex items-center space-x-1.5 shadow-sm">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Assess</span>
+            </button>
+          </div>
+        `;
+        studentsGrid.appendChild(card);
+      });
+    }
+
+    /* --- ATTENDANCE TRACKER FUNCTIONS --- */
+    function loadAttendanceForSelectedDate() {
+      const selectedDate = document.getElementById('att_date_picker').value;
+      const savedForDate = attendanceDB[selectedDate] || {};
+
+      currentAttendanceState = {};
+      students.forEach(s => {
+        currentAttendanceState[s.id] = savedForDate[s.id] || { status: 'Present', notes: '' };
+      });
+
+      renderAttendanceTable();
+    }
+
+    function setAttendanceStatus(studentId, status) {
+      if (!currentAttendanceState[studentId]) {
+        currentAttendanceState[studentId] = { status: 'Present', notes: '' };
+      }
+      currentAttendanceState[studentId].status = status;
+      renderAttendanceTable();
+    }
+
+    function updateAttendanceNotes(studentId, notes) {
+      if (!currentAttendanceState[studentId]) {
+        currentAttendanceState[studentId] = { status: 'Present', notes: '' };
+      }
+      currentAttendanceState[studentId].notes = notes;
+    }
+
+    function markAllPresent() {
+      let filtered = students.filter(s => s.class === attendanceClass);
+      filtered.forEach(s => {
+        if (!currentAttendanceState[s.id]) currentAttendanceState[s.id] = { notes: '' };
+        currentAttendanceState[s.id].status = 'Present';
+      });
+      renderAttendanceTable();
+    }
+
+    function saveAttendance() {
+      const selectedDate = document.getElementById('att_date_picker').value;
+      attendanceDB[selectedDate] = currentAttendanceState;
+      localStorage.setItem('mws_attendance_db', JSON.stringify(attendanceDB));
+      alert(`Attendance for ${attendanceClass} on ${selectedDate} saved successfully!`);
+    }
+
+    function renderAttendanceTable() {
+      const tbody = document.getElementById('attendanceTableBody');
+      tbody.innerHTML = '';
+
+      let filtered = students.filter(s => {
+        const matchesClass = s.class === attendanceClass;
+        const matchesGrade = activeGrade === 'ALL' || s.level === activeGrade;
+        const matchesSearch = s.name.toLowerCase().includes(searchQuery);
+        return matchesClass && matchesGrade && matchesSearch;
+      });
+
+      let presentCount = 0, sickCount = 0, lateCount = 0, absentCount = 0;
+
+      filtered.forEach(s => {
+        const record = currentAttendanceState[s.id] || { status: 'Present', notes: '' };
+        const st = record.status;
+
+        if (st === 'Present') presentCount++;
+        else if (st === 'Sick') sickCount++;
+        else if (st === 'Late') lateCount++;
+        else if (st === 'Absent') absentCount++;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800">${s.name}</td>
+          <td class="py-3 px-4">${s.class}</td>
+          <td class="py-3 px-4"><span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 whitespace-nowrap inline-block">${s.level}</span></td>
+          <td class="py-3 px-4">
+            <div class="flex items-center justify-center space-x-1">
+              <button onclick="setAttendanceStatus(${s.id}, 'Present')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${st === 'Present' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">Present</button>
+              <button onclick="setAttendanceStatus(${s.id}, 'Sick')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${st === 'Sick' ? 'bg-blue-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">Sick</button>
+              <button onclick="setAttendanceStatus(${s.id}, 'Late')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${st === 'Late' ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">Late</button>
+              <button onclick="setAttendanceStatus(${s.id}, 'Absent')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${st === 'Absent' ? 'bg-rose-500 text-white shadow-sm' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">Absent</button>
+            </div>
+          </td>
+          <td class="py-3 px-4">
+            <input type="text" value="${record.notes || ''}" placeholder="Remarks..." onchange="updateAttendanceNotes(${s.id}, this.value)" class="w-full text-xs p-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('att_count_present').textContent = presentCount;
+      document.getElementById('att_count_sick').textContent = sickCount;
+      document.getElementById('att_count_late').textContent = lateCount;
+      document.getElementById('att_count_absent').textContent = absentCount;
+
+      const totalStudents = filtered.length;
+      const rate = totalStudents > 0 ? Math.round(((presentCount + lateCount) / totalStudents) * 100) : 0;
+      document.getElementById('att_rate_percent').textContent = `${rate}%`;
+    }
+
+    /* --- MONTHLY RECAP FUNCTIONS --- */
+    function openMonthlyRecapModal() {
+      document.getElementById('recapClassSubtitle').textContent = `Recap Summary for ${attendanceClass}`;
+      renderMonthlyRecapTable();
+      document.getElementById('monthlyRecapModal').classList.remove('hidden');
+    }
+
+    function closeMonthlyRecapModal() {
+      document.getElementById('monthlyRecapModal').classList.add('hidden');
+    }
+
+    function renderMonthlyRecapTable() {
+      const selectedMonth = document.getElementById('recap_month_picker').value;
+      const tbody = document.getElementById('monthlyRecapTableBody');
+      tbody.innerHTML = '';
+
+      let filteredStudents = students.filter(s => s.class === attendanceClass);
+      const datesInMonth = Object.keys(attendanceDB).filter(d => d.startsWith(selectedMonth));
+
+      filteredStudents.forEach(s => {
+        let p = 0, sick = 0, l = 0, a = 0;
+
+        datesInMonth.forEach(d => {
+          const rec = attendanceDB[d] && attendanceDB[d][s.id];
+          if (rec) {
+            if (rec.status === 'Present') p++;
+            else if (rec.status === 'Sick') sick++;
+            else if (rec.status === 'Late') l++;
+            else if (rec.status === 'Absent') a++;
+          }
+        });
+
+        const totalDays = p + sick + l + a;
+        const rate = totalDays > 0 ? Math.round(((p + l) / totalDays) * 100) : 0;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-bold text-slate-800">${s.name}</td>
+          <td class="py-3 px-3">${s.level}</td>
+          <td class="py-3 px-3 text-center font-bold text-emerald-600">${p}</td>
+          <td class="py-3 px-3 text-center font-bold text-blue-600">${sick}</td>
+          <td class="py-3 px-3 text-center font-bold text-amber-600">${l}</td>
+          <td class="py-3 px-3 text-center font-bold text-rose-600">${a}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold ${rate >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${rate}%</span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* --- ASSESSMENT MODAL & INDIVIDUAL PROGRESS RADAR + LINE CHART --- */
+    function openAssessmentModal(studentId) {
+      selectedStudentId = studentId;
+      const student = students.find(s => s.id === studentId);
+      if (!student) return;
+
+      document.getElementById('modalStudentName').textContent = student.name;
+      document.getElementById('modalClassBadge').textContent = student.class;
+      document.getElementById('modalLevelBadge').textContent = student.level;
+      document.getElementById('modalAvatar').textContent = student.name.substring(0, 2).toUpperCase();
+      document.getElementById('formTermTag').textContent = currentTerm;
+
+      document.getElementById('inp_lo').value = '';
+      document.getElementById('inp_comments').value = '';
+      document.getElementById('inp_gaps').value = '';
+      document.getElementById('inp_evidence_file').value = '';
+      document.getElementById('inp_evidence_url').value = '';
+      document.getElementById('evidencePreviewBox').classList.add('hidden');
+      uploadedEvidenceBase64 = '';
+      document.querySelectorAll('input[name="rubricScore"]').forEach(r => r.checked = false);
+
+      renderStudentIndividualChart(studentId);
+      renderStudentGrowthLineChart(studentId);
+      renderModalHistoryLogs();
+      document.getElementById('assessmentModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('assessmentModal').classList.add('hidden');
+    }
+
+    function previewUploadedFile(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          uploadedEvidenceBase64 = evt.target.result;
+          document.getElementById('evidencePreviewImg').src = uploadedEvidenceBase64;
+          document.getElementById('evidencePreviewBox').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function saveDailyAssessment(e) {
+      e.preventDefault();
+      const scoreInput = document.querySelector('input[name="rubricScore"]:checked');
+      if (!scoreInput) {
+        alert("Please select a Rubric Score Level (1, 2, or 3).");
+        return;
+      }
+
+      const driveUrlInput = document.getElementById('inp_evidence_url').value.trim();
+      const finalEvidence = uploadedEvidenceBase64 || driveUrlInput || '';
+
+      const newLog = {
+        id: Date.now(),
+        studentId: selectedStudentId,
+        term: currentTerm,
+        teacher: activeTeacher,
+        date: document.getElementById('inp_date').value,
+        subject: document.getElementById('inp_subject').value,
+        lo: document.getElementById('inp_lo').value,
+        score: parseInt(scoreInput.value),
+        comments: document.getElementById('inp_comments').value,
+        gaps: document.getElementById('inp_gaps').value,
+        evidence: finalEvidence
+      };
+
+      dailyLogs.push(newLog);
+      localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs));
+
+      renderStudentIndividualChart(selectedStudentId);
+      renderStudentGrowthLineChart(selectedStudentId);
+      renderModalHistoryLogs();
+      renderStudents();
+
+      document.getElementById('inp_lo').value = '';
+      document.getElementById('inp_comments').value = '';
+      document.getElementById('inp_gaps').value = '';
+      document.getElementById('inp_evidence_file').value = '';
+      document.getElementById('inp_evidence_url').value = '';
+      document.getElementById('evidencePreviewBox').classList.add('hidden');
+      uploadedEvidenceBase64 = '';
+      document.querySelectorAll('input[name="rubricScore"]').forEach(r => r.checked = false);
+    }
+
+    function renderStudentIndividualChart(studentId) {
+      const ctx = document.getElementById('studentIndividualChart').getContext('2d');
+      if (studentIndividualChartInstance) studentIndividualChartInstance.destroy();
+
+      const subjects = ['Numeracy', 'Literacy Bahasa', 'Literacy English', 'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor'];
+      const sLogs = dailyLogs.filter(l => l.studentId === studentId && l.term === currentTerm);
+
+      const subjectAverages = subjects.map(sub => {
+        const matching = sLogs.filter(l => l.subject === sub);
+        if (matching.length === 0) return 0;
+        const sum = matching.reduce((acc, l) => acc + l.score, 0);
+        return parseFloat((sum / matching.length).toFixed(1));
+      });
+
+      studentIndividualChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Numeracy', 'Lit Indo', 'Lit Eng', 'Behaviour', 'Social Emo', 'Fine Motor', 'Gross Motor'],
+          datasets: [{
+            label: 'Domain Score (1-3)',
+            data: subjectAverages,
+            backgroundColor: 'rgba(124, 58, 237, 0.2)',
+            borderColor: '#7C3AED',
+            pointBackgroundColor: '#7C3AED',
+            pointRadius: 3,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0,
+              max: 3,
+              ticks: { stepSize: 1, display: false },
+              grid: { color: '#E2E8F0' },
+              pointLabels: { font: { size: 8, weight: 'bold' } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderStudentGrowthLineChart(studentId) {
+      const ctx = document.getElementById('studentGrowthLineChart').getContext('2d');
+      if (studentGrowthLineChartInstance) studentGrowthLineChartInstance.destroy();
+
+      const sLogs = dailyLogs.filter(l => l.studentId === studentId && l.term === currentTerm).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      const dates = sLogs.map(l => l.date);
+      const scores = sLogs.map(l => l.score);
+
+      studentGrowthLineChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates.length > 0 ? dates : ['No Entries'],
+          datasets: [{
+            label: 'Rubric Score Progress',
+            data: scores.length > 0 ? scores : [0],
+            borderColor: '#10B981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: '#10B981'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 3, ticks: { stepSize: 1 } },
+            x: { ticks: { font: { size: 8 } } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderModalHistoryLogs() {
+      const logsList = document.getElementById('modalLogsList');
+      const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm).reverse();
+
+      document.getElementById('logHistoryCount').textContent = `${sLogs.length} logs in ${currentTerm}`;
+      logsList.innerHTML = '';
+
+      if (sLogs.length === 0) {
+        logsList.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs font-medium">No logs recorded yet for ${currentTerm}.</div>`;
+        return;
+      }
+
+      sLogs.forEach(l => {
+        const item = document.createElement('div');
+        item.className = "p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs";
+        
+        let evidenceHtml = '';
+        if (l.evidence) {
+          if (l.evidence.startsWith('data:image') || l.evidence.startsWith('http')) {
+            evidenceHtml = `
+              <div class="mt-2">
+                <a href="${l.evidence}" target="_blank" class="inline-block relative group">
+                  <img src="${l.evidence}" alt="Evidence" class="h-20 w-32 object-cover rounded-lg border border-slate-200">
+                  <span class="text-[9px] bg-black/70 text-white font-bold px-1.5 py-0.5 rounded absolute bottom-1 right-1"><i class="fa-solid fa-up-right-from-square mr-1"></i>View Photo</span>
+                </a>
+              </div>
+            `;
+          }
+        }
+
+        item.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-extrabold text-slate-800">${l.subject}</span>
+            ${getRubricBadge(l.score)}
+          </div>
+          <p class="text-slate-600 font-semibold">LO: ${l.lo}</p>
+          ${l.comments ? `<p class="text-slate-500 text-[11px]"><i class="fa-solid fa-comment-dots mr-1 text-slate-400"></i>${l.comments}</p>` : ''}
+          ${l.gaps ? `<p class="text-amber-700 text-[11px] font-medium bg-amber-50 p-1.5 rounded-lg border border-amber-100"><i class="fa-solid fa-triangle-exclamation mr-1"></i><strong>Gap:</strong> ${l.gaps}</p>` : ''}
+          ${evidenceHtml}
+          <div class="flex justify-between items-center text-[10px] text-slate-400 pt-1 border-t border-slate-100">
+            <span>By ${l.teacher}</span>
+            <span>${l.date}</span>
+          </div>
+        `;
+        logsList.appendChild(item);
+      });
+    }
+
+    /* --- PRINTABLE PARENT REPORT LOGIC --- */
+    function openParentReportModal() {
+      const student = students.find(s => s.id === selectedStudentId);
+      if (!student) return;
+
+      document.getElementById('rptStudentName').textContent = student.name;
+      document.getElementById('rptStudentClass').textContent = student.class;
+      document.getElementById('rptStudentLevel').textContent = student.level;
+      document.getElementById('rptTermTag').textContent = currentTerm;
+      document.getElementById('rptTeacherSign').textContent = `(${activeTeacher})`;
+
+      // Render Observations List
+      const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm).reverse();
+      const obsContainer = document.getElementById('rptObservationList');
+      obsContainer.innerHTML = '';
+
+      if (sLogs.length === 0) {
+        obsContainer.innerHTML = `<p class="text-slate-400 italic">No formal daily observations recorded for this term yet.</p>`;
+      } else {
+        sLogs.slice(0, 5).forEach(l => {
+          const div = document.createElement('div');
+          div.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-200";
+          div.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+              <strong class="text-slate-800">${l.subject}: ${l.lo}</strong>
+              ${getRubricBadge(l.score)}
+            </div>
+            <p class="text-slate-600 text-[11px]">${l.comments || 'Demonstrates active participation.'}</p>
+            ${l.gaps ? `<p class="text-amber-700 text-[10px] font-bold mt-1">Focus Area: ${l.gaps}</p>` : ''}
+          `;
+          obsContainer.appendChild(div);
+        });
+      }
+
+      // Render Report Radar
+      renderParentReportRadar(selectedStudentId);
+
+      document.getElementById('parentReportModal').classList.remove('hidden');
+    }
+
+    function closeParentReportModal() {
+      document.getElementById('parentReportModal').classList.add('hidden');
+    }
+
+    function renderParentReportRadar(studentId) {
+      const ctx = document.getElementById('rptRadarChart').getContext('2d');
+      if (rptRadarChartInstance) rptRadarChartInstance.destroy();
+
+      const subjects = ['Numeracy', 'Literacy Bahasa', 'Literacy English', 'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor'];
+      const sLogs = dailyLogs.filter(l => l.studentId === studentId && l.term === currentTerm);
+
+      const subjectAverages = subjects.map(sub => {
+        const matching = sLogs.filter(l => l.subject === sub);
+        if (matching.length === 0) return 0;
+        const sum = matching.reduce((acc, l) => acc + l.score, 0);
+        return parseFloat((sum / matching.length).toFixed(1));
+      });
+
+      rptRadarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: ['Numeracy', 'Lit Indo', 'Lit Eng', 'Behaviour', 'Social Emo', 'Fine Motor', 'Gross Motor'],
+          datasets: [{
+            label: 'Domain Mastery Score (1-3)',
+            data: subjectAverages,
+            backgroundColor: 'rgba(124, 58, 237, 0.25)',
+            borderColor: '#7C3AED',
+            pointBackgroundColor: '#7C3AED',
+            pointRadius: 4,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              min: 0,
+              max: 3,
+              ticks: { stepSize: 1, display: false },
+              grid: { color: '#E2E8F0' },
+              pointLabels: { font: { size: 9, weight: 'bold' } }
+            }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function renderRosterTable() {
+      const tbody = document.getElementById('rosterTableBody');
+      tbody.innerHTML = '';
+
+      let filtered = students.filter(s => activeClass === 'ALL' || s.class === activeClass);
+
+      filtered.forEach(s => {
+        const sLogs = dailyLogs.filter(l => l.studentId === s.id && l.term === currentTerm);
+        const lastLog = sLogs[sLogs.length - 1];
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-bold text-slate-800">${s.name}</td>
+          <td class="py-3 px-4">${s.class}</td>
+          <td class="py-3 px-4"><span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700 whitespace-nowrap inline-block">${s.level}</span></td>
+          <td class="py-3 px-4">${sLogs.length} entries</td>
+          <td class="py-3 px-4">${lastLog ? getRubricBadge(lastLog.score) : '<span class="text-slate-400">No entries</span>'}</td>
+          <td class="py-3 px-4 text-right">
+            <button onclick="openAssessmentModal(${s.id})" class="text-brand-600 hover:text-brand-800 font-bold">Assess Student</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /* --- ANALYTICS CHART --- */
+    function renderAnalyticsChart() {
+      const ctx = document.getElementById('domainAnalyticsChart').getContext('2d');
+      if (analyticsChartInstance) analyticsChartInstance.destroy();
+
+      const subjects = ['Numeracy', 'Literacy Bahasa', 'Literacy English', 'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor'];
+      const currentLogs = dailyLogs.filter(l => l.term === currentTerm);
+
+      const averages = subjects.map(sub => {
+        const subLogs = currentLogs.filter(l => l.subject === sub);
+        if (subLogs.length === 0) return 0;
+        const sum = subLogs.reduce((acc, l) => acc + l.score, 0);
+        return parseFloat((sum / subLogs.length).toFixed(2));
+      });
+
+      const barColors = averages.map(val => {
+        if (val === 0) return '#CBD5E1';
+        if (val < 1.8) return '#EF4444';
+        if (val < 2.5) return '#3B82F6';
+        return '#10B981';
+      });
+
+      analyticsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: subjects,
+          datasets: [{
+            label: `Average Rubric Level (${currentTerm})`,
+            data: averages,
+            backgroundColor: barColors,
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { min: 0, max: 3, ticks: { stepSize: 0.5 } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    /* --- LOCAL BACKUP & RESTORE (JSON SYNC) --- */
+    function exportDataJSON() {
+      const backupData = {
+        dailyLogs: dailyLogs,
+        attendanceDB: attendanceDB,
+        exportDate: new Date().toISOString()
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `mws_dashboard_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJSON(event) {
+      const fileReader = new FileReader();
+      fileReader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.dailyLogs) dailyLogs = parsed.dailyLogs;
+          if (parsed.attendanceDB) attendanceDB = parsed.attendanceDB;
+
+          localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs));
+          localStorage.setItem('mws_attendance_db', JSON.stringify(attendanceDB));
+
+          alert("Dashboard data restored successfully!");
+          renderStudents();
+        } catch (err) {
+          alert("Invalid backup file format.");
+        }
+      };
+      if (event.target.files[0]) {
+        fileReader.readAsText(event.target.files[0]);
+      }
+    }
+  </script>
+</body>
+</html>
