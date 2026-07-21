@@ -42,6 +42,15 @@
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
     
+    /* Playful Grid Background Pattern for Landing Page */
+    .grid-bg-pattern {
+      background-color: #ffffff;
+      background-image: 
+        linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
     /* Print Stylesheet for Parent Report */
     @media print {
       body * { visibility: hidden; }
@@ -59,34 +68,46 @@
     <aside class="w-60 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex z-20">
       <div>
         <!-- Logo & Branding -->
-        <div class="p-5 flex items-center space-x-3 border-b border-slate-100">
+        <div onclick="switchTab('landing')" class="p-5 flex items-center space-x-3 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition">
           <img src="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx" 
                onerror="this.onerror=null; this.src='https://via.placeholder.com/40/7C3AED/FFFFFF?text=MWS';" 
                alt="Millennia World School Logo" 
                class="w-8 h-8 object-contain rounded-lg">
           <div>
             <h1 class="font-extrabold text-slate-800 text-xs leading-tight">Millennia World School</h1>
-            <p class="text-[9px] text-brand-600 font-bold tracking-wider uppercase">Assessment Dashboard</p>
+            <p class="text-[9px] text-brand-600 font-bold tracking-wider uppercase">Assessment Portal</p>
           </div>
         </div>
 
         <!-- Navigation Menu -->
         <nav class="px-3 space-y-1 mt-4">
-          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl bg-brand-50 text-brand-600 font-bold text-xs transition">
+          <button onclick="switchTab('landing')" id="nav-landing" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl bg-brand-50 text-brand-600 font-bold text-xs transition">
+            <i class="fa-solid fa-compass text-sm"></i>
+            <span>Home Portal</span>
+          </button>
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
             <i class="fa-solid fa-house text-sm"></i>
             <span>Daily Assessment</span>
+            <i id="lock-icon-dashboard" class="fa-solid fa-lock text-[10px] ml-auto text-amber-500"></i>
           </button>
-          <button onclick="switchTab('attendance')" id="nav-attendance" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+          <button onclick="switchTab('calendar')" id="nav-calendar" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+            <i class="fa-solid fa-calendar-days text-sm"></i>
+            <span>Academic Calendar</span>
+          </button>
+          <button onclick="switchTab('attendance')" id="nav-attendance" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
             <i class="fa-solid fa-calendar-check text-sm"></i>
             <span>Attendance Tracker</span>
+            <i id="lock-icon-attendance" class="fa-solid fa-lock text-[10px] ml-auto text-amber-500"></i>
           </button>
-          <button onclick="switchTab('roster')" id="nav-roster" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+          <button onclick="switchTab('roster')" id="nav-roster" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
             <i class="fa-solid fa-users text-sm"></i>
             <span>Students Roster</span>
+            <i id="lock-icon-roster" class="fa-solid fa-lock text-[10px] ml-auto text-amber-500"></i>
           </button>
-          <button onclick="switchTab('analytics')" id="nav-analytics" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
+          <button onclick="switchTab('analytics')" id="nav-analytics" class="w-full flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-800 font-semibold text-xs transition">
             <i class="fa-solid fa-chart-pie text-sm"></i>
             <span>Progress Analytics</span>
+            <i id="lock-icon-analytics" class="fa-solid fa-lock text-[10px] ml-auto text-amber-500"></i>
           </button>
         </nav>
       </div>
@@ -127,39 +148,130 @@
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
           <div class="flex flex-col items-end">
             <div class="flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-              <i id="accountRoleIcon" class="fa-solid fa-user-lock text-brand-600"></i>
-              <span class="text-xs font-semibold text-slate-500">Logged in:</span>
-              <select id="teacherSelect" onchange="promptTeacherPasscode()" class="bg-transparent text-xs font-bold text-brand-700 focus:outline-none cursor-pointer">
-                <optgroup label="School Leadership">
-                  <option value="Principal">👑 Principal (Master Access)</option>
-                </optgroup>
-                <optgroup label="Djebel Chelia Homeroom">
-                  <option value="Tr Nanda" selected>Tr Nanda (Djebel Chelia)</option>
-                  <option value="Tr Afi">Tr Afi (Djebel Chelia)</option>
-                </optgroup>
-                <optgroup label="Snowdon Homeroom">
-                  <option value="Tr Widya">Tr Widya (Snowdon)</option>
-                  <option value="Tr Sindy">Tr Sindy (Snowdon)</option>
-                </optgroup>
-                <optgroup label="Mauna Kea Homeroom">
-                  <option value="Tr Yunda">Tr Yunda (Mauna Kea)</option>
-                  <option value="Tr Diya">Tr Diya (Mauna Kea)</option>
-                </optgroup>
-              </select>
+              <i id="accountRoleIcon" class="fa-solid fa-user-lock text-amber-500"></i>
+              <span class="text-xs font-semibold text-slate-500">Active Profile:</span>
+              <span id="activeTeacherLabel" class="text-xs font-extrabold text-amber-600">Locked (Log In First)</span>
             </div>
           </div>
 
-          <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold border-2 border-brand-500 shadow-sm">
-            <span id="teacherAvatar">TN</span>
-          </div>
+          <button onclick="openChooseAccountModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>CHOOSE ACCOUNT</span>
+          </button>
         </div>
       </header>
 
       <!-- CONTENT VIEWS CONTAINER -->
       <main class="p-6 space-y-6">
 
+        <!-- VIEW 0: LANDING PAGE / HOME PORTAL (DEFAULT OPEN) -->
+        <div id="view-landing-content" class="space-y-8">
+          
+          <!-- HERO BANNER WITH CLEAN ANIMATED LOGO -->
+          <div class="relative rounded-3xl grid-bg-pattern p-8 sm:p-12 border-2 border-brand-100 shadow-sm overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div class="max-w-xl space-y-4 z-10 text-center sm:text-left">
+              <div class="inline-flex items-center space-x-2 bg-brand-50 text-brand-700 font-extrabold text-xs px-3.5 py-1.5 rounded-full border border-brand-200">
+                <span>🎒 Academic Year 2026/2027</span>
+              </div>
+              <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
+                Welcome to <span class="text-brand-600">Millennia World School</span> Assessment Portal 🚀
+              </h1>
+              <p class="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                Empowering Early Years & Elementary growth through holistic assessment rubrics, real-time developmental evidence, and compassionate tracking.
+              </p>
+              
+              <div class="pt-2 flex flex-wrap gap-3 justify-center sm:justify-start">
+                <button onclick="openChooseAccountModal()" class="px-7 py-3.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-sm rounded-2xl shadow-lg shadow-amber-400/30 transition transform hover:-translate-y-0.5 flex items-center space-x-2">
+                  <i class="fa-solid fa-users text-base"></i>
+                  <span>CHOOSE ACCOUNT</span>
+                </button>
+                <button onclick="switchTab('calendar')" class="px-6 py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-2xl shadow-sm transition flex items-center space-x-2">
+                  <i class="fa-solid fa-calendar-days text-brand-600"></i>
+                  <span>Academic Calendar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Mascot Logo (Clean, No Purple Box, Dynamic Floating Icons) -->
+            <div class="relative flex items-center justify-center shrink-0">
+              <img src="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx" 
+                   onerror="this.onerror=null; this.src='https://via.placeholder.com/180/7C3AED/FFFFFF?text=MWS';" 
+                   alt="MWS Logo" class="w-44 h-44 sm:w-52 sm:h-52 object-contain drop-shadow-xl animate-pulse">
+              
+              <!-- Floating Animated Decorations -->
+              <div class="absolute -top-3 -right-2 text-3xl animate-bounce">⭐</div>
+              <div class="absolute -bottom-2 -left-2 text-3xl animate-bounce" style="animation-delay: 0.6s;">✏️</div>
+              <div class="absolute top-1/2 -left-6 text-2xl animate-bounce" style="animation-delay: 1.2s;">🚀</div>
+            </div>
+          </div>
+
+          <!-- TEACHER DAILY EMOTIONAL WELL-BEING RECAP BOARD -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-extrabold text-slate-800"><i class="fa-solid fa-heart-circle-check text-rose-500 mr-2"></i>Teacher Daily Emotional Well-Being Recap</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Real-time emotional check-in logs recorded when teachers sign in today.</p>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-100">Live Team Vibes ✨</span>
+            </div>
+
+            <div id="teacherEmotionRecapGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- UPCOMING ACADEMIC HIGHLIGHTS (CLEAN STACKED DATE BADGE) -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="text-base font-extrabold text-slate-800"><i class="fa-solid fa-bullhorn text-brand-600 mr-2"></i>Upcoming Academic Events (2026/2027)</h3>
+              <button onclick="switchTab('calendar')" class="text-xs font-bold text-brand-600 hover:underline">View Full Calendar →</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              <!-- Event Item 1 -->
+              <div class="flex items-center space-x-4 p-4 bg-slate-50/80 hover:bg-brand-50/50 rounded-2xl border border-slate-200/80 transition">
+                <div class="flex flex-col items-center justify-center w-14 h-14 bg-white rounded-2xl border border-brand-200 shadow-sm shrink-0">
+                  <span class="text-[10px] font-black uppercase text-brand-600 tracking-wider">JUL</span>
+                  <span class="text-lg font-black text-slate-800 leading-none mt-0.5">20</span>
+                </div>
+                <div>
+                  <h4 class="font-extrabold text-xs text-slate-800">1st Day of School 2026/2027</h4>
+                  <p class="text-[11px] text-slate-500 font-medium mt-0.5">Diagnostic Assessment & Back to School.</p>
+                </div>
+              </div>
+
+              <!-- Event Item 2 -->
+              <div class="flex items-center space-x-4 p-4 bg-slate-50/80 hover:bg-amber-50/50 rounded-2xl border border-slate-200/80 transition">
+                <div class="flex flex-col items-center justify-center w-14 h-14 bg-white rounded-2xl border border-amber-200 shadow-sm shrink-0">
+                  <span class="text-[10px] font-black uppercase text-amber-600 tracking-wider">AUG</span>
+                  <span class="text-lg font-black text-slate-800 leading-none mt-0.5">17</span>
+                </div>
+                <div>
+                  <h4 class="font-extrabold text-xs text-slate-800">Independence Day Ceremony</h4>
+                  <p class="text-[11px] text-slate-500 font-medium mt-0.5">National Independence Day Celebration.</p>
+                </div>
+              </div>
+
+              <!-- Event Item 3 -->
+              <div class="flex items-center space-x-4 p-4 bg-slate-50/80 hover:bg-emerald-50/50 rounded-2xl border border-slate-200/80 transition">
+                <div class="flex flex-col items-center justify-center w-14 h-14 bg-white rounded-2xl border border-emerald-200 shadow-sm shrink-0">
+                  <span class="text-[10px] font-black uppercase text-emerald-600 tracking-wider">OCT</span>
+                  <span class="text-lg font-black text-slate-800 leading-none mt-0.5">12</span>
+                </div>
+                <div>
+                  <h4 class="font-extrabold text-xs text-slate-800">Digital Citizenship Week</h4>
+                  <p class="text-[11px] text-slate-500 font-medium mt-0.5">FGDs & Midterm Report preparation.</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
         <!-- VIEW 1: DASHBOARD / DAILY ASSESSMENT CARDS -->
-        <div id="view-dashboard-content" class="space-y-6">
+        <div id="view-dashboard-content" class="hidden space-y-6">
           
           <!-- WELCOME BANNER -->
           <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden">
@@ -242,7 +354,49 @@
           </div>
         </div>
 
-        <!-- VIEW 2: ATTENDANCE TRACKER -->
+        <!-- VIEW 2: ACADEMIC CALENDAR VIEW -->
+        <div id="view-calendar-content" class="hidden space-y-6">
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 class="text-xl font-extrabold text-slate-800">MWS Academic Calendar Year 2026/2027</h3>
+                <p class="text-xs text-slate-500 mt-1">Official schedule of school activities, diagnostic assessments, and holidays.</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-slate-400 uppercase">Filter Month:</span>
+                <select id="calendarMonthFilter" onchange="renderAcademicCalendar()" class="bg-slate-100 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 text-slate-700 focus:outline-none">
+                  <option value="ALL">All Months</option>
+                  <option value="2026-07">July 2026</option>
+                  <option value="2026-08">August 2026</option>
+                  <option value="2026-09">September 2026</option>
+                  <option value="2026-10">October 2026</option>
+                  <option value="2026-11">November 2026</option>
+                  <option value="2026-12">December 2026</option>
+                  <option value="2027-01">January 2027</option>
+                  <option value="2027-02">February 2027</option>
+                  <option value="2027-03">March 2027</option>
+                  <option value="2027-04">April 2027</option>
+                  <option value="2027-05">May 2027</option>
+                  <option value="2027-06">June 2027</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Event Category Legend -->
+            <div class="flex flex-wrap gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs font-bold">
+              <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span>Student Activities</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span><span>Parent & SLC Activities</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span>Holidays & Breaks</span></span>
+            </div>
+
+            <!-- Calendar Event Cards -->
+            <div id="calendarEventsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: ATTENDANCE TRACKER -->
         <div id="view-attendance-content" class="hidden space-y-6">
           <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -334,7 +488,7 @@
           </div>
         </div>
 
-        <!-- VIEW 3: STUDENTS ROSTER VIEW -->
+        <!-- VIEW 4: STUDENTS ROSTER VIEW -->
         <div id="view-roster-content" class="hidden space-y-6">
           <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
             <h3 class="text-xl font-extrabold text-slate-800 mb-2">Class Roster & History Summary</h3>
@@ -360,7 +514,7 @@
           </div>
         </div>
 
-        <!-- VIEW 4: PROGRESS ANALYTICS VIEW -->
+        <!-- VIEW 5: PROGRESS ANALYTICS VIEW -->
         <div id="view-analytics-content" class="hidden space-y-6">
           <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -387,8 +541,83 @@
     </div>
   </div>
 
+  <!-- CHOOSE TEACHER ACCOUNT MODAL -->
+  <div id="chooseAccountModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center space-x-2">
+          <img src="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx" class="w-6 h-6 object-contain">
+          <h3 class="font-extrabold text-slate-800 text-base">Select Teacher Account</h3>
+        </div>
+        <button onclick="closeChooseAccountModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500">Choose your profile to unlock your class dashboard:</p>
+
+      <div class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+        <button onclick="selectTeacherFromList('Principal')" class="w-full p-3 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-amber-900 text-xs">👑 Principal Access</p>
+            <p class="text-[10px] text-amber-700">Master access to all classes</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-amber-600"></i>
+        </button>
+
+        <button onclick="selectTeacherFromList('Tr Nanda')" class="w-full p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-slate-800 text-xs">Tr Nanda</p>
+            <p class="text-[10px] text-slate-400">Homeroom: Djebel Chelia</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+
+        <button onclick="selectTeacherFromList('Tr Afi')" class="w-full p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-slate-800 text-xs">Tr Afi</p>
+            <p class="text-[10px] text-slate-400">Homeroom: Djebel Chelia</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+
+        <button onclick="selectTeacherFromList('Tr Widya')" class="w-full p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-slate-800 text-xs">Tr Widya</p>
+            <p class="text-[10px] text-slate-400">Homeroom: Snowdon</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+
+        <button onclick="selectTeacherFromList('Tr Sindy')" class="w-full p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-slate-800 text-xs">Tr Sindy</p>
+            <p class="text-[10px] text-slate-400">Homeroom: Snowdon</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+
+        <button onclick="selectTeacherFromList('Tr Yunda')" class="w-full p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-slate-800 text-xs">Tr Yunda</p>
+            <p class="text-[10px] text-slate-400">Homeroom: Mauna Kea</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+
+        <button onclick="selectTeacherFromList('Tr Diya')" class="w-full p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 border border-slate-200 text-left flex items-center justify-between transition">
+          <div>
+            <p class="font-extrabold text-slate-800 text-xs">Tr Diya</p>
+            <p class="text-[10px] text-slate-400">Homeroom: Mauna Kea</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- PASSCODE PIN SECURITY MODAL -->
-  <div id="passcodeModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+  <div id="passcodeModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4">
       <div class="w-14 h-14 bg-brand-100 text-brand-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">
         🔒
@@ -406,6 +635,48 @@
         <button onclick="cancelPasscode()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200 transition">Cancel</button>
         <button onclick="verifyPasscode()" class="w-1/2 py-2.5 rounded-xl bg-brand-600 text-white font-bold text-xs hover:bg-brand-700 transition">Unlock</button>
       </div>
+    </div>
+  </div>
+
+  <!-- POP-UP EMOTIONAL CHECK-IN MODAL (APPEARS RIGHT AFTER LOGIN) -->
+  <div id="emotionCheckinModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-100 space-y-5 animate-bounce-short">
+      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold">
+        💖
+      </div>
+      <div>
+        <h3 class="font-extrabold text-slate-800 text-lg">Daily Emotional Check-in</h3>
+        <p class="text-xs text-slate-500 mt-1" id="emotionCheckinGreeting">How are you feeling today before entering class?</p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <button onclick="submitTeacherEmotion('😃 Happy')" class="p-3 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 rounded-2xl border border-slate-200 text-center transition group">
+          <div class="text-3xl mb-1 group-hover:scale-110 transition">😃</div>
+          <p class="text-[11px] font-bold text-slate-700">Happy</p>
+        </button>
+        <button onclick="submitTeacherEmotion('🤩 Excited')" class="p-3 bg-slate-50 hover:bg-purple-50 hover:border-purple-300 rounded-2xl border border-slate-200 text-center transition group">
+          <div class="text-3xl mb-1 group-hover:scale-110 transition">🤩</div>
+          <p class="text-[11px] font-bold text-slate-700">Excited</p>
+        </button>
+        <button onclick="submitTeacherEmotion('😌 Calm')" class="p-3 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 rounded-2xl border border-slate-200 text-center transition group">
+          <div class="text-3xl mb-1 group-hover:scale-110 transition">😌</div>
+          <p class="text-[11px] font-bold text-slate-700">Calm</p>
+        </button>
+        <button onclick="submitTeacherEmotion('😴 Tired')" class="p-3 bg-slate-50 hover:bg-blue-50 hover:border-blue-300 rounded-2xl border border-slate-200 text-center transition group">
+          <div class="text-3xl mb-1 group-hover:scale-110 transition">😴</div>
+          <p class="text-[11px] font-bold text-slate-700">Tired</p>
+        </button>
+        <button onclick="submitTeacherEmotion('😢 Sad')" class="p-3 bg-slate-50 hover:bg-rose-50 hover:border-rose-300 rounded-2xl border border-slate-200 text-center transition group">
+          <div class="text-3xl mb-1 group-hover:scale-110 transition">😢</div>
+          <p class="text-[11px] font-bold text-slate-700">Sad</p>
+        </button>
+        <button onclick="submitTeacherEmotion('😟 Anxious')" class="p-3 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 rounded-2xl border border-slate-200 text-center transition group">
+          <div class="text-3xl mb-1 group-hover:scale-110 transition">😟</div>
+          <p class="text-[11px] font-bold text-slate-700">Anxious</p>
+        </button>
+      </div>
+
+      <button onclick="skipTeacherEmotion()" class="text-xs font-bold text-slate-400 hover:text-slate-600 underline">Skip for now</button>
     </div>
   </div>
 
@@ -698,6 +969,26 @@
       "Tr Diya": { pass: "0506", class: "MAUNA KEA", role: "Teacher" }
     };
 
+    // MWS Academic Calendar 2026/2027 Events Database
+    const academicCalendarEvents = [
+      { date: "2026-07-20", title: "1st Day of School 2026/2027 & Diagnostic Assessment", category: "activity", month: "2026-07", dayNum: "20", monthStr: "JUL" },
+      { date: "2026-07-21", title: "Diagnostic Assessment & Back to School", category: "activity", month: "2026-07", dayNum: "21", monthStr: "JUL" },
+      { date: "2026-08-17", title: "National Independence Day Ceremony & Celebration", category: "activity", month: "2026-08", dayNum: "17", monthStr: "AUG" },
+      { date: "2026-08-21", title: "Quality Time 1 Activities", category: "parent", month: "2026-08", dayNum: "21", monthStr: "AUG" },
+      { date: "2026-09-15", title: "Global Goals Week & Climate Action Project", category: "activity", month: "2026-09", dayNum: "15", monthStr: "SEP" },
+      { date: "2026-10-12", title: "Digital Citizenship Week & SLC Preparation", category: "parent", month: "2026-10", dayNum: "12", monthStr: "OCT" },
+      { date: "2026-10-23", title: "Midterm Report & Student-Led Conference", category: "parent", month: "2026-10", dayNum: "23", monthStr: "OCT" },
+      { date: "2026-11-12", title: "National Father's Day & World Compassion Day", category: "activity", month: "2026-11", dayNum: "12", monthStr: "NOV" },
+      { date: "2026-12-14", title: "Final Assessment & Report Day", category: "parent", month: "2026-12", dayNum: "14", monthStr: "DEC" },
+      { date: "2026-12-25", title: "Christmas Day Holiday", category: "holiday", month: "2026-12", dayNum: "25", monthStr: "DEC" },
+      { date: "2027-01-04", title: "Back to School (Term 2 Starts)", category: "activity", month: "2027-01", dayNum: "04", monthStr: "JAN" },
+      { date: "2027-02-10", title: "Lunar New Year & Isra'Miraj Holiday", category: "holiday", month: "2027-02", dayNum: "10", monthStr: "FEB" },
+      { date: "2027-03-22", title: "Nyepi & Eid Al-Fitr Holidays", category: "holiday", month: "2027-03", dayNum: "22", monthStr: "MAR" },
+      { date: "2027-04-21", title: "Kartini Day & Earth Day Celebration", category: "activity", month: "2027-04", dayNum: "21", monthStr: "APR" },
+      { date: "2027-05-01", title: "Labor Day & Vesak Day Holidays", category: "holiday", month: "2027-05", dayNum: "01", monthStr: "MAY" },
+      { date: "2027-06-18", title: "Graduation KG, EL, JH & SLC Report", category: "parent", month: "2027-06", dayNum: "18", monthStr: "JUN" }
+    ];
+
     // Initial Student Dataset
     const rawStudents = [
       // MAUNA KEA
@@ -776,10 +1067,14 @@
     let students = rawStudents.map((s, i) => ({ id: i + 1, ...s }));
     let dailyLogs = JSON.parse(localStorage.getItem('mws_daily_logs')) || [];
     let attendanceDB = JSON.parse(localStorage.getItem('mws_attendance_db')) || {};
+    let teacherEmotionsDB = JSON.parse(localStorage.getItem('mws_teacher_emotions')) || [
+      { teacher: 'Tr Nanda', emotion: '😃 Happy', time: '07:30 AM' },
+      { teacher: 'Tr Afi', emotion: '🤩 Excited', time: '07:45 AM' }
+    ];
 
     // App State
-    let activeTeacher = 'Tr Nanda';
-    let previousTeacher = 'Tr Nanda';
+    let activeTeacher = null; // null = NOT LOGGED IN
+    let selectedTeacherCandidate = null;
     let activeClass = 'DJEBEL CHELIA';
     let attendanceClass = 'DJEBEL CHELIA';
     let activeGrade = 'ALL';
@@ -795,8 +1090,6 @@
 
     // DOM Elements
     const studentsGrid = document.getElementById('studentsGrid');
-    const teacherSelect = document.getElementById('teacherSelect');
-    const teacherAvatar = document.getElementById('teacherAvatar');
     const welcomeGreeting = document.getElementById('welcomeGreeting');
     const homeroomBadge = document.getElementById('homeroomBadge');
     const termSelect = document.getElementById('termSelect');
@@ -808,7 +1101,8 @@
       document.getElementById('att_date_picker').value = todayStr;
       document.getElementById('recap_month_picker').value = todayStr.substring(0, 7);
 
-      applyTeacherProfile('Tr Nanda');
+      switchTab('landing'); // Default view on open!
+      renderTeacherEmotionRecap();
 
       // Search & Filters
       document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -821,12 +1115,20 @@
       });
     });
 
-    // Passcode Security Prompt
-    function promptTeacherPasscode() {
-      const selected = teacherSelect.value;
-      if (selected === activeTeacher) return;
+    /* --- ACCOUNT SELECTION, PIN SECURITY, & POST-LOGIN EMOTION CHECK-IN --- */
+    function openChooseAccountModal() {
+      document.getElementById('chooseAccountModal').classList.remove('hidden');
+    }
 
-      document.getElementById('pinModalTeacherName').textContent = `Enter PIN for ${selected}`;
+    function closeChooseAccountModal() {
+      document.getElementById('chooseAccountModal').classList.add('hidden');
+    }
+
+    function selectTeacherFromList(tName) {
+      selectedTeacherCandidate = tName;
+      closeChooseAccountModal();
+      
+      document.getElementById('pinModalTeacherName').textContent = `Enter PIN for ${tName}`;
       document.getElementById('inp_passcode').value = '';
       document.getElementById('passcodeError').classList.add('hidden');
       document.getElementById('passcodeModal').classList.remove('hidden');
@@ -834,30 +1136,84 @@
     }
 
     function verifyPasscode() {
-      const selected = teacherSelect.value;
       const enteredPin = document.getElementById('inp_passcode').value;
-      const sec = teacherSecurity[selected];
+      const sec = teacherSecurity[selectedTeacherCandidate];
 
       if (sec && enteredPin === sec.pass) {
         document.getElementById('passcodeModal').classList.add('hidden');
-        previousTeacher = activeTeacher;
-        activeTeacher = selected;
-        applyTeacherProfile(selected);
+        activeTeacher = selectedTeacherCandidate;
+        applyTeacherProfile(activeTeacher);
+        
+        // Open Emotional Check-in Pop-up Modal right after login!
+        document.getElementById('emotionCheckinGreeting').textContent = `Hi ${activeTeacher}! How are you feeling today before entering class?`;
+        document.getElementById('emotionCheckinModal').classList.remove('hidden');
       } else {
         document.getElementById('passcodeError').classList.remove('hidden');
       }
     }
 
     function cancelPasscode() {
-      teacherSelect.value = activeTeacher;
       document.getElementById('passcodeModal').classList.add('hidden');
+    }
+
+    function submitTeacherEmotion(emotion) {
+      document.getElementById('emotionCheckinModal').classList.add('hidden');
+      
+      const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // Add or update today's emotion checkin
+      const existingIdx = teacherEmotionsDB.findIndex(e => e.teacher === activeTeacher);
+      if (existingIdx >= 0) {
+        teacherEmotionsDB[existingIdx] = { teacher: activeTeacher, emotion: emotion, time: timeNow };
+      } else {
+        teacherEmotionsDB.push({ teacher: activeTeacher, emotion: emotion, time: timeNow });
+      }
+      localStorage.setItem('mws_teacher_emotions', JSON.stringify(teacherEmotionsDB));
+
+      renderTeacherEmotionRecap();
+      switchTab('dashboard'); // Redirect to main dashboard!
+    }
+
+    function skipTeacherEmotion() {
+      document.getElementById('emotionCheckinModal').classList.add('hidden');
+      switchTab('dashboard');
+    }
+
+    function renderTeacherEmotionRecap() {
+      const grid = document.getElementById('teacherEmotionRecapGrid');
+      grid.innerHTML = '';
+
+      if (teacherEmotionsDB.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-4 text-slate-400 text-xs font-medium">No teacher check-ins today yet. Choose account to sign in!</div>`;
+        return;
+      }
+
+      teacherEmotionsDB.forEach(e => {
+        const card = document.createElement('div');
+        card.className = "p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center space-x-2.5";
+        card.innerHTML = `
+          <div class="text-2xl">${e.emotion.split(' ')[0]}</div>
+          <div>
+            <h5 class="font-extrabold text-xs text-slate-800 leading-tight">${e.teacher}</h5>
+            <p class="text-[10px] text-slate-400 font-semibold">${e.emotion.split(' ')[1] || ''} • ${e.time}</p>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
     }
 
     function applyTeacherProfile(tName) {
       const sec = teacherSecurity[tName];
-      const initials = tName === 'Principal' ? 'HQ' : tName.split(' ').map(n => n[0]).join('');
-      teacherAvatar.textContent = initials;
+      document.getElementById('activeTeacherLabel').textContent = tName;
+      document.getElementById('activeTeacherLabel').className = "text-xs font-bold text-brand-700";
       welcomeGreeting.textContent = `Hi ${tName}! Glad to see you! 👋`;
+
+      // Remove lock indicators on navigation
+      ['dashboard', 'attendance', 'roster', 'analytics'].forEach(id => {
+        const lockIcon = document.getElementById(`lock-icon-${id}`);
+        if (lockIcon) lockIcon.classList.add('hidden');
+        const navBtn = document.getElementById(`nav-${id}`);
+        if (navBtn) navBtn.classList.remove('text-slate-400');
+      });
 
       if (sec.role === 'Principal') {
         homeroomBadge.textContent = "👑 Principal Access (All Classes)";
@@ -907,8 +1263,17 @@
       renderStudents();
     }
 
+    /* --- STRICT ACCESS TAB CONTROL --- */
     function switchTab(tabName) {
-      const tabs = ['dashboard', 'attendance', 'roster', 'analytics'];
+      // SECURITY LOCK: If teacher hasn't logged in, block access to protected tabs!
+      const protectedTabs = ['dashboard', 'attendance', 'roster', 'analytics'];
+      if (!activeTeacher && protectedTabs.includes(tabName)) {
+        alert("🔒 Access Restricted: Please choose your account and enter your PIN first!");
+        openChooseAccountModal();
+        return;
+      }
+
+      const tabs = ['landing', 'dashboard', 'calendar', 'attendance', 'roster', 'analytics'];
       tabs.forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         const content = document.getElementById(`view-${t}-content`);
@@ -921,6 +1286,8 @@
         }
       });
 
+      if (tabName === 'dashboard') renderStudents();
+      if (tabName === 'calendar') renderAcademicCalendar();
       if (tabName === 'attendance') loadAttendanceForSelectedDate();
       if (tabName === 'roster') renderRosterTable();
       if (tabName === 'analytics') renderAnalyticsChart();
@@ -950,6 +1317,41 @@
         }
       });
       loadAttendanceForSelectedDate();
+    }
+
+    /* --- ACADEMIC CALENDAR RENDER WITH CLEAN DATE BADGES --- */
+    function renderAcademicCalendar() {
+      const selectedMonth = document.getElementById('calendarMonthFilter').value;
+      const grid = document.getElementById('calendarEventsGrid');
+      grid.innerHTML = '';
+
+      let filteredEvents = academicCalendarEvents.filter(e => selectedMonth === 'ALL' || e.month === selectedMonth);
+
+      if (filteredEvents.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 text-xs font-medium">No school events found for the selected month.</div>`;
+        return;
+      }
+
+      filteredEvents.forEach(e => {
+        let borderColor = "border-emerald-200";
+        let monthTextColor = "text-emerald-600";
+        if (e.category === 'parent') { borderColor = "border-purple-200"; monthTextColor = "text-purple-600"; }
+        if (e.category === 'holiday') { borderColor = "border-rose-200"; monthTextColor = "text-rose-600"; }
+
+        const card = document.createElement('div');
+        card.className = `p-4 bg-slate-50/80 hover:bg-white rounded-2xl border ${borderColor} flex items-center space-x-4 transition hover:shadow-md`;
+        card.innerHTML = `
+          <div class="flex flex-col items-center justify-center w-14 h-14 bg-white rounded-2xl border ${borderColor} shadow-sm shrink-0">
+            <span class="text-[10px] font-black uppercase ${monthTextColor} tracking-wider">${e.monthStr}</span>
+            <span class="text-lg font-black text-slate-800 leading-none mt-0.5">${e.dayNum}</span>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-xs text-slate-800 leading-snug">${e.title}</h4>
+            <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-200/60 text-slate-600 inline-block mt-1">${e.category}</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
     }
 
     function getRubricBadge(score) {
@@ -1239,7 +1641,7 @@
         id: Date.now(),
         studentId: selectedStudentId,
         term: currentTerm,
-        teacher: activeTeacher,
+        teacher: activeTeacher || 'Tr Nanda',
         date: document.getElementById('inp_date').value,
         subject: document.getElementById('inp_subject').value,
         lo: document.getElementById('inp_lo').value,
@@ -1405,7 +1807,7 @@
       document.getElementById('rptStudentClass').textContent = student.class;
       document.getElementById('rptStudentLevel').textContent = student.level;
       document.getElementById('rptTermTag').textContent = currentTerm;
-      document.getElementById('rptTeacherSign').textContent = `(${activeTeacher})`;
+      document.getElementById('rptTeacherSign').textContent = `(${activeTeacher || 'Tr Nanda'})`;
 
       // Render Observations List
       const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm).reverse();
@@ -1560,6 +1962,7 @@
       const backupData = {
         dailyLogs: dailyLogs,
         attendanceDB: attendanceDB,
+        teacherEmotionsDB: teacherEmotionsDB,
         exportDate: new Date().toISOString()
       };
 
@@ -1579,12 +1982,15 @@
           const parsed = JSON.parse(e.target.result);
           if (parsed.dailyLogs) dailyLogs = parsed.dailyLogs;
           if (parsed.attendanceDB) attendanceDB = parsed.attendanceDB;
+          if (parsed.teacherEmotionsDB) teacherEmotionsDB = parsed.teacherEmotionsDB;
 
           localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs));
           localStorage.setItem('mws_attendance_db', JSON.stringify(attendanceDB));
+          localStorage.setItem('mws_teacher_emotions', JSON.stringify(teacherEmotionsDB));
 
           alert("Dashboard data restored successfully!");
           renderStudents();
+          renderTeacherEmotionRecap();
         } catch (err) {
           alert("Invalid backup file format.");
         }
