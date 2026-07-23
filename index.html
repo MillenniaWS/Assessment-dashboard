@@ -19,6 +19,7 @@
   <!-- FIREBASE / FIRESTORE SDK (CLOUD SYNC) -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
   <script>
     tailwind.config = {
@@ -3411,6 +3412,30 @@
       };
       if (event.target.files[0]) fileReader.readAsText(event.target.files[0]);
     }
+
+    async function loginWithGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  try {
+    const result = await firebase.auth().signInWithPopup(provider);
+    const user = result.user;
+    
+    if (!user.email.endsWith('@millennia21.id')) {
+      alert('Akses ditolak! Anda harus menggunakan email domain @millennia21.id');
+      await firebase.auth().signOut();
+      return;
+    }
+
+    activeTeacher = user.displayName || user.email;
+    sessionStorage.setItem('mws_active_teacher', activeTeacher);
+    
+    if (typeof showToast === 'function') {
+      showToast("Berhasil login sebagai " + user.email);
+    }
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    alert("Gagal Login Google: " + error.message);
+  }
+}
   </script>
 </body>
 </html>
