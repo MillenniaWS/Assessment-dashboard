@@ -21,7 +21,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Config Firebase Akun MWS Kamu
+    // Config Firebase Akun MWS
     const firebaseConfig = {
       apiKey: "AIzaSyA_lm9ZJ3JYHCfE-DZFcny16ZTCtetAWPU",
       authDomain: "assessment-dashboard-6d944.firebaseapp.com",
@@ -93,7 +93,7 @@
     <!-- DESKTOP SIDEBAR -->
     <aside id="mainSidebar" class="w-60 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex z-30 shrink-0 sidebar-transition relative">
       
-      <!-- FIXED FLOATING TOGGLE BUTTON WITHOUT CLIPPING -->
+      <!-- FIXED FLOATING TOGGLE BUTTON -->
       <button onclick="toggleSidebarCollapse()" id="btnCollapseSidebar" class="absolute -right-3.5 top-6 w-7 h-7 bg-white border border-slate-300 rounded-full flex items-center justify-center text-slate-600 hover:text-brand-600 shadow-md z-50 transition transform hover:scale-110">
         <i id="collapseIcon" class="fa-solid fa-chevron-left text-[11px]"></i>
       </button>
@@ -300,7 +300,7 @@
             </div>
           </div>
 
-          <!-- SUBMISSION STATUS BOARD (REALTIME INTEGRATED WITH SUBMIT/UNSUBMIT ACTIONS) -->
+          <!-- SUBMISSION STATUS BOARD -->
           <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
@@ -327,9 +327,9 @@
 
         <!-- VIEW 1: DAILY ASSESSMENT -->
         <div id="view-dashboard-content" class="hidden space-y-6">
-          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             
-            <div class="relative z-10 flex-1 min-w-0 pr-2">
+            <div class="relative z-10 flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px] font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full" id="activeTermBadge">Term 1 Assessment</span>
                 <span id="homeroomBadge" class="text-[11px] font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full">Homeroom: Active Class</span>
@@ -340,15 +340,15 @@
               <p class="text-brand-100 text-xs sm:text-sm mt-2 leading-relaxed">Record daily assessment rubrics across 4 Core Domains & Subjects, upload learning evidence, and track individual progress.</p>
             </div>
 
-            <!-- TWO SEPARATE SUBMIT / UNSUBMIT BUTTONS FOR ASSESSMENT -->
-            <div id="assessmentActionButtonsContainer" class="relative z-10 flex flex-col gap-2 shrink-0 hidden">
-              <button onclick="submitClassReportAction('Assessment')" class="px-5 py-2.5 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
-                <i class="fa-solid fa-paper-plane text-sm"></i>
-                <span>Submit Assessment Report</span>
+            <!-- ACTION BUTTONS ASSESSMENT -->
+            <div id="assessmentActionButtonsContainer" class="relative z-10 flex flex-col sm:flex-row items-center gap-2 shrink-0">
+              <button onclick="submitClassReportAction('Assessment')" class="px-4 py-2.5 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs rounded-2xl shadow-lg transition flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+                <span>Submit Report</span>
               </button>
-              <button onclick="unsubmitClassReportAction('Assessment')" class="px-5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs rounded-2xl shadow-md transition flex items-center justify-center space-x-2">
+              <button onclick="unsubmitClassReportAction('Assessment')" class="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs rounded-2xl shadow-md transition flex items-center justify-center space-x-1.5 whitespace-nowrap">
                 <i class="fa-solid fa-rotate-left text-xs"></i>
-                <span>Unsubmit Assessment Report</span>
+                <span>Unsubmit</span>
               </button>
             </div>
           </div>
@@ -452,7 +452,7 @@
           </div>
         </div>
 
-        <!-- VIEW 2: ACADEMIC CALENDAR & PDF MANAGER -->
+        <!-- VIEW 2: ACADEMIC CALENDAR -->
         <div id="view-calendar-content" class="hidden space-y-6">
           <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             
@@ -505,36 +505,32 @@
 
         <!-- VIEW 3: ATTENDANCE TRACKER -->
         <div id="view-attendance-content" class="hidden space-y-6">
-          <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-extrabold text-slate-800">Daily Attendance Tracker</h3>
               <p class="text-xs text-slate-500 mt-1">Mark student attendance class by class: Present, Sick, Late, or Absent.</p>
             </div>
             
-            <div class="flex flex-wrap items-end gap-2.5 w-full md:w-auto">
-              <div class="flex flex-col">
-                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">ATTENDANCE DATE</label>
-                <input type="date" id="att_date_picker" onchange="loadAttendanceForSelectedDate()" class="bg-slate-100 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 text-slate-700 focus:outline-none h-[38px]">
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+              <div class="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shrink-0">
+                <span class="text-[10px] font-black text-slate-400 uppercase pl-1.5">DATE</span>
+                <input type="date" id="att_date_picker" onchange="loadAttendanceForSelectedDate()" class="bg-white text-xs font-bold px-2 py-1 rounded-xl border border-slate-200 text-slate-700 focus:outline-none">
               </div>
 
-              <button id="btnMarkPresent" onclick="markAllPresent()" class="h-[38px] px-3.5 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs transition flex items-center justify-center">
-                <i class="fa-solid fa-check-double mr-1.5"></i> Mark All Present
+              <button onclick="openMonthlyRecapModal()" class="px-3 py-2 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 font-bold text-xs transition flex items-center shrink-0">
+                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i> Monthly Recap
               </button>
 
-              <button onclick="openMonthlyRecapModal()" class="h-[38px] px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-xs transition flex items-center justify-center">
-                <i class="fa-solid fa-chart-line mr-1.5"></i> Monthly Recap
-              </button>
-
-              <button id="btnSaveAttendance" onclick="saveAttendance()" class="h-[38px] px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/30 transition flex items-center justify-center">
+              <button id="btnSaveAttendance" onclick="saveAttendance()" class="px-3.5 py-2 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition flex items-center shrink-0">
                 <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save
               </button>
 
-              <!-- TWO SEPARATE SUBMIT & UNSUBMIT BUTTONS FOR ATTENDANCE -->
-              <div id="attendanceActionButtonsContainer" class="flex items-center space-x-1.5 hidden">
-                <button onclick="submitClassReportAction('Attendance')" class="h-[38px] px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center">
+              <!-- SUBMIT & UNSUBMIT ATTENDANCE -->
+              <div id="attendanceActionButtonsContainer" class="flex items-center space-x-1.5 pl-2 border-l border-slate-200 shrink-0">
+                <button onclick="submitClassReportAction('Attendance')" class="px-3.5 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md transition flex items-center">
                   <i class="fa-solid fa-paper-plane mr-1.5"></i> Submit
                 </button>
-                <button onclick="unsubmitClassReportAction('Attendance')" class="h-[38px] px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center">
+                <button onclick="unsubmitClassReportAction('Attendance')" class="px-3.5 py-2 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs shadow-md transition flex items-center">
                   <i class="fa-solid fa-rotate-left mr-1.5"></i> Unsubmit
                 </button>
               </div>
@@ -587,7 +583,7 @@
           </div>
         </div>
 
-        <!-- VIEW 4: STUDENTS ROSTER WITH FULL DATABASE MANAGER -->
+        <!-- VIEW 4: STUDENTS ROSTER -->
         <div id="view-roster-content" class="hidden space-y-6">
           <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -1374,13 +1370,6 @@
     let uploadedShoutoutBase64 = '';
     let currentAttendanceState = {};
 
-    const studentsGrid = document.getElementById('studentsGrid');
-    const welcomeGreeting = document.getElementById('welcomeGreeting');
-    const homeroomBadge = document.getElementById('homeroomBadge');
-    const termSelect = document.getElementById('termSelect');
-    const yearSelect = document.getElementById('yearSelect');
-    const activeTermBadge = document.getElementById('activeTermBadge');
-
     // FIRESTORE LIVE SYNC
     db.collection("mws_school_data").doc("main_store")
       .onSnapshot((doc) => {
@@ -1915,13 +1904,20 @@
       renderStudents();
     }
 
-    /* --- ACTION SUBMIT TERPISAH (HIJAU) --- */
+    /* --- ACTION SUBMIT --- */
     function submitClassReportAction(type) {
       if (activeRole === 'Director' || activeRole === 'Principal') {
         showToast("👑 Executive Mode: Submission is only for Homeroom Teachers.", true);
         return;
       }
-      const targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+      
+      let targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+      
+      // Auto-fallback jika targetClass 'ALL', gunakan kelas Homeroom milik guru
+      if ((!targetClass || targetClass === 'ALL') && teacherSecurity[activeTeacher] && teacherSecurity[activeTeacher].class !== 'ALL') {
+        targetClass = teacherSecurity[activeTeacher].class;
+      }
+
       if (!targetClass || targetClass === 'ALL') {
         showToast("Pilih kelas spesifik terlebih dahulu sebelum Submit!", true);
         return;
@@ -1942,21 +1938,31 @@
       renderSubmissionStatusBoard();
     }
 
-    /* --- ACTION UNSUBMIT TERPISAH (MERAH) --- */
+    /* --- ACTION UNSUBMIT --- */
     function unsubmitClassReportAction(type) {
       if (activeRole === 'Director' || activeRole === 'Principal') {
         showToast("👑 Executive Mode: Unsubmitting is only for Homeroom Teachers.", true);
         return;
       }
-      const targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+
+      let targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+
+      // Auto-fallback jika targetClass 'ALL', gunakan kelas Homeroom milik guru
+      if ((!targetClass || targetClass === 'ALL') && teacherSecurity[activeTeacher] && teacherSecurity[activeTeacher].class !== 'ALL') {
+        targetClass = teacherSecurity[activeTeacher].class;
+      }
+
       if (!targetClass || targetClass === 'ALL') {
         showToast("Pilih kelas spesifik terlebih dahulu!", true);
         return;
       }
 
       const today = new Date().toISOString().split('T')[0];
+
       if (dailySubmissionsDB[today] && dailySubmissionsDB[today][targetClass] && dailySubmissionsDB[today][targetClass][type]) {
-        delete dailySubmissionsDB[today][targetClass][type];
+        // Set ke null agar overwrite terjadi di Firebase & LocalStorage
+        dailySubmissionsDB[today][targetClass][type] = null;
+        
         safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
 
         pushRealtimeUpdate(`↩️ ${activeTeacher} cancelled/unsubmitted ${type} Report for Class ${targetClass}`);
@@ -1968,6 +1974,7 @@
       }
     }
 
+    /* --- STATUS BOARD HOMEPAGE --- */
     function renderSubmissionStatusBoard() {
       const today = new Date().toISOString().split('T')[0];
       const grid = document.getElementById('submissionStatusGrid');
@@ -1982,14 +1989,21 @@
         const attSub = cData['Attendance'];
         const assSub = cData['Assessment'];
 
+        let statusBadgeHtml = '';
+        if (attSub && assSub) {
+          statusBadgeHtml = `<span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Complete</span>`;
+        } else if (attSub || assSub) {
+          statusBadgeHtml = `<span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">In Progress (1/2)</span>`;
+        } else {
+          statusBadgeHtml = `<span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Pending</span>`;
+        }
+
         const card = document.createElement('div');
-        card.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5";
+        card.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 shadow-sm hover:shadow-md transition";
         card.innerHTML = `
-          <div class="flex items-center justify-between border-b pb-2">
-            <h4 class="font-extrabold text-xs text-slate-800">${c}</h4>
-            <span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full ${attSub && assSub ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
-              ${attSub && assSub ? '✓ Complete' : 'Pending'}
-            </span>
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
+            <h4 class="font-extrabold text-xs text-slate-800 tracking-wide">${c}</h4>
+            ${statusBadgeHtml}
           </div>
           <div class="space-y-1.5 text-[11px]">
             <div class="flex items-center justify-between">
@@ -2493,9 +2507,7 @@
 
       if (activeRole === 'Director' || activeRole === 'Principal') {
         const btnSave = document.getElementById('btnSaveAttendance');
-        const btnMark = document.getElementById('btnMarkPresent');
         if (btnSave) btnSave.classList.add('hidden');
-        if (btnMark) btnMark.classList.add('hidden');
       }
 
       renderAttendanceTable();
@@ -2515,17 +2527,6 @@
       if (activeRole === 'Director' || activeRole === 'Principal') return;
       if (!currentAttendanceState[studentId]) currentAttendanceState[studentId] = { status: 'Present', notes: '' };
       currentAttendanceState[studentId].notes = notes;
-    }
-
-    function markAllPresent() {
-      if (activeRole === 'Director' || activeRole === 'Principal') return;
-      let filtered = getActiveYearStudents().filter(s => s.class === attendanceClass && s.status !== 'Graduated');
-      filtered.forEach(s => {
-        if (!currentAttendanceState[s.id]) currentAttendanceState[s.id] = { notes: '' };
-        currentAttendanceState[s.id].status = 'Present';
-      });
-      renderAttendanceTable();
-      showToast(`Marked all students in ${attendanceClass} as Present!`);
     }
 
     function saveAttendance() {
