@@ -3434,28 +3434,83 @@
     }
 
     async function loginWithGoogle() {
+  if (!firebase.apps.length || !firebase.auth) {
+    alert("Firebase Auth belum diinisialisasi dengan benar.");
+    return;
+  }
+
   const provider = new firebase.auth.GoogleAuthProvider();
+  // Memaksa Google menampilkan pop-up pilih akun setiap kali diklik
+  provider.setCustomParameters({ prompt: 'select_account' });
+
   try {
     const result = await firebase.auth().signInWithPopup(provider);
     const user = result.user;
-    
+
+    // 1. Validasi Domain Email Sekolah
     if (!user.email.endsWith('@millennia21.id')) {
       alert('Akses ditolak! Anda harus menggunakan email domain @millennia21.id');
       await firebase.auth().signOut();
       return;
     }
 
-    activeTeacher = user.displayName || user.email;
-    sessionStorage.setItem('mws_active_teacher', activeTeacher);
-    
-    if (typeof showToast === 'function') {
-      showToast("Berhasil login sebagai " + user.email);
+    const userName = (user.displayName || user.email).toLowerCase();
+    let matchedProfile = null;
+
+    // 2. Cocokkan Nama Google dengan Daftar Profil Guru (teacherSecurity)
+    if (typeof teacherSecurity !== 'undefined') {
+      for (let teacherName in teacherSecurity) {
+        if (userName.includes(teacherName.toLowerCase()) || teacherName.toLowerCase().includes(userName)) {
+          matchedProfile = teacherName;
+          break;
+        }
+      }
     }
+
+    // 3. Set Akun Aktif
+    if (matchedProfile) {
+      if (typeof setTeacherActive === 'function') {
+        setTeacherActive(matchedProfile);
+      } else {
+        localStorage.setItem('mws_active_user', matchedProfile);
+      }
+      if (typeof showToast === 'function') {
+        showToast(`Login Berhasil! Masuk sebagai ${matchedProfile}`);
+      }
+    } else {
+      activeTeacher = user.displayName || user.email;
+      localStorage.setItem('mws_active_user', activeTeacher);
+      if (typeof showToast === 'function') {
+        showToast("Berhasil login sebagai " + user.email);
+      }
+    }
+
   } catch (error) {
     console.error("Google Auth Error:", error);
     alert("Gagal Login Google: " + error.message);
   }
 }
+
+    // Dengarkan Perubahan Data Cloud Firestore Realtime Across Devices
+function listenToCloudChanges() {
+  if (!db) return;
+
+  // Realtime Sync Assessment Data
+  db.collection("assessments").onSnapshot((snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === "added" || change.type === "modified") {
+        console.log("Data cloud diperbarui dari device lain:", change.doc.data());
+        // Reload UI / render tabel secara otomatis
+        if (typeof renderStudentsGrid === 'function') renderStudentsGrid();
+      }
+    });
+  });
+}
+
+// Jalankan listener saat halaman pertama kali dimuat
+document.addEventListener("DOMContentLoaded", () => {
+  listenToCloudChanges();
+});
   </script>
 </body>
 </html>
