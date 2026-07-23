@@ -84,7 +84,7 @@
 <body class="font-sans antialiased text-slate-800">
 
   <!-- INSTANT TOAST NOTIFICATION -->
-  <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-[100] flex items-center space-x-3 transition-all transform translate-y-20 opacity-0 pointer-events-none border border-slate-700">
+  <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-[120] flex items-center space-x-3 transition-all transform translate-y-20 opacity-0 pointer-events-none border border-slate-700">
     <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
     <span id="toastMessage" class="text-xs font-bold">Action Completed!</span>
   </div>
@@ -215,7 +215,7 @@
     <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
 
       <!-- TOP HEADER -->
-      <header class="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
+      <header class="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center space-x-3 md:hidden">
           <button onclick="toggleMobileMenu()" class="p-2 rounded-xl bg-slate-100 text-slate-700 text-sm">
             <i class="fa-solid fa-bars"></i>
@@ -253,7 +253,8 @@
               <span id="notifBadge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
             </button>
 
-            <div id="notifDropdown" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 hidden z-50 space-y-3">
+            <!-- DROPDOWN NOTIF DIATAS LAYER AGAR TIDAK TERKLIK SALAH ACCIDENTAL -->
+            <div id="notifDropdown" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 hidden z-[100] space-y-3">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h4 class="font-extrabold text-xs text-slate-800"><i class="fa-solid fa-bolt text-amber-500 mr-1.5"></i> Live Activity Feed</h4>
                 <button onclick="clearNotifications()" class="text-[10px] text-brand-600 font-bold hover:underline">Clear All</button>
@@ -327,8 +328,8 @@
 
         <!-- VIEW 1: DAILY ASSESSMENT -->
         <div id="view-dashboard-content" class="hidden space-y-6">
-          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden flex flex-wrap justify-between items-center gap-4">
-            <div class="relative z-10 max-w-2xl">
+          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="relative z-10 max-w-xl">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px] font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full" id="activeTermBadge">Term 1 Assessment</span>
                 <span id="homeroomBadge" class="text-[11px] font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full">Homeroom: Active Class</span>
@@ -337,9 +338,10 @@
               <p class="text-brand-100 text-xs sm:text-sm mt-2 leading-relaxed">Record daily assessment rubrics across 4 Core Domains & Subjects, upload learning evidence, and track individual progress.</p>
             </div>
 
+            <!-- BUTTON SUBMIT/UNSUBMIT ASSESMENT (BISA DITOGGLE & TIDAK OVERFLOW) -->
             <button id="btnSubmitAssessmentReport" onclick="submitTodayClassReport('Assessment')" class="relative z-10 px-5 py-3 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center space-x-2 shrink-0 hidden">
-              <i class="fa-solid fa-circle-check text-base"></i>
-              <span>Submit Today's Assessment Report</span>
+              <i id="iconSubmitAssessment" class="fa-solid fa-circle-check text-base"></i>
+              <span id="labelSubmitAssessment">Submit Today's Assessment Report</span>
             </button>
           </div>
 
@@ -519,6 +521,7 @@
                 <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save
               </button>
 
+              <!-- BUTTON SUBMIT ATTENDANCE REPORT (SUPPORT TOGGLE UNSUBMIT) -->
               <button id="btnSubmitAttendanceReport" onclick="submitTodayClassReport('Attendance')" class="h-[38px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center hidden">
                 <i class="fa-solid fa-paper-plane mr-1.5"></i> Submit Report
               </button>
@@ -580,15 +583,16 @@
                 <p class="text-xs text-slate-500">Manage student profiles, view history side panels, and promote students for new academic years.</p>
               </div>
 
+              <!-- TOMBOL TANPA EMOTICON 🚀 DAN ➕ -->
               <div class="flex flex-wrap items-center gap-2">
                 <button onclick="promoteAcademicYear()" class="px-4 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-extrabold text-xs rounded-2xl shadow-md transition flex items-center space-x-2">
-                  <i class="fa-solid fa-rocket text-sm"></i>
-                  <span>🚀 Promote All Students (New Year)</span>
+                  <i class="fa-solid fa-arrow-up-right-dots text-sm"></i>
+                  <span>Promote All Students (New Year)</span>
                 </button>
 
                 <button onclick="openStudentManagerModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-brand-500/20 transition flex items-center space-x-2">
                   <i class="fa-solid fa-user-plus text-sm"></i>
-                  <span>➕ Add New Student</span>
+                  <span>Add New Student</span>
                 </button>
               </div>
             </div>
@@ -659,7 +663,7 @@
   <div id="studentMgmtModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 id="studentModalTitle" class="font-extrabold text-slate-800 text-base">➕ Add New Student to Database</h3>
+        <h3 id="studentModalTitle" class="font-extrabold text-slate-800 text-base">Add New Student to Database</h3>
         <button onclick="closeStudentManagerModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
@@ -705,7 +709,7 @@
   <div id="addCalendarEventModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-slate-800 text-base">➕ Add Calendar Event</h3>
+        <h3 class="font-extrabold text-slate-800 text-base">Add Calendar Event</h3>
         <button onclick="closeAddCalendarEventModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
@@ -741,7 +745,7 @@
   <div id="setPdfModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-slate-800 text-base">📄 Official Calendar PDF Link</h3>
+        <h3 class="font-extrabold text-slate-800 text-base">Official Calendar PDF Link</h3>
         <button onclick="closeSetPdfModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
@@ -1213,7 +1217,7 @@
           </div>
           <div>
             <p class="mb-12">School Principal</p>
-            <p class="underline font-extrabold text-slate-800">Ms. Latifah, S.Pd.</p>
+            <p class="underline font-extrabold text-slate-800">Latifah Nur Restiningtyas, S.Pd.</p>
           </div>
         </div>
       </div>
@@ -1447,6 +1451,7 @@
       renderNotifications();
       renderAcademicCalendar();
       updateCalendarPdfButton();
+      updateSubmitButtonsUI();
 
       setInterval(checkDayChangeAutoReset, 30000);
       document.addEventListener('visibilitychange', () => {
@@ -1498,6 +1503,7 @@
       renderRosterTable();
       renderAnalyticsChart();
       renderAcademicCalendar();
+      updateSubmitButtonsUI();
     }
 
     function renderClassFilterTabs() {
@@ -1630,7 +1636,7 @@
       currentAcademicYear = nextYear;
       yearSelect.value = nextYear;
 
-      pushRealtimeUpdate(`🚀 Promosi Kenaikan Kelas Berhasil! Transisi ke Academic Year ${nextYear}.`);
+      pushRealtimeUpdate(`Promosi Kenaikan Kelas Berhasil! Transisi ke Academic Year ${nextYear}.`);
       showToast(`✨ Successful Rollover to ${nextYear}! (${promotedCount} Promoted, ${graduatedCount} Graduated)`);
 
       changeAcademicYear();
@@ -1645,6 +1651,7 @@
 
         renderSubmissionStatusBoard();
         renderTeacherEmotionRecap();
+        updateSubmitButtonsUI();
         if (activeTeacher) showToast(`🌙 New day (${currentDateStr})! Status board reset.`, false);
       }
     }
@@ -1716,6 +1723,7 @@
       renderShoutouts();
       renderAcademicCalendar();
       updateCalendarPdfButton();
+      updateSubmitButtonsUI();
       if (!document.getElementById('view-attendance-content').classList.contains('hidden')) loadAttendanceForSelectedDate();
       if (!document.getElementById('rosterLogsDrawerModal').classList.contains('hidden') && selectedRosterDrawerStudentId) renderRosterDrawerLogs();
     }
@@ -1911,6 +1919,7 @@
       renderClassFilterTabs();
       renderAttendanceClassFilterTabs();
       renderStudents();
+      updateSubmitButtonsUI();
       if (!document.getElementById('view-attendance-content').classList.contains('hidden')) loadAttendanceForSelectedDate();
     }
 
@@ -1934,23 +1943,78 @@
       renderStudents();
     }
 
+    // FUNGSI SUBMIT/UNSUBMIT LAPORAN HARI INI
     function submitTodayClassReport(type) {
       if (activeRole === 'Director' || activeRole === 'Principal') {
         showToast("👑 Executive Mode: Submission is only for Homeroom Teachers.", true);
         return;
       }
+      const targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+      if (targetClass === 'ALL') {
+        showToast("Pilih kelas tertentu dulu sebelum submit!", true);
+        return;
+      }
+
       const today = new Date().toISOString().split('T')[0];
       const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       if (!dailySubmissionsDB[today]) dailySubmissionsDB[today] = {};
-      if (!dailySubmissionsDB[today][activeClass]) dailySubmissionsDB[today][activeClass] = {};
+      if (!dailySubmissionsDB[today][targetClass]) dailySubmissionsDB[today][targetClass] = {};
 
-      dailySubmissionsDB[today][activeClass][type] = { submittedBy: activeTeacher, time: timeNow };
-      safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
-      
-      pushRealtimeUpdate(`📩 ${activeTeacher} submitted ${type} Report for Class ${activeClass}!`);
-      showToast(`Today's ${type} Report for ${activeClass} Submitted!`);
+      const isAlreadySubmitted = dailySubmissionsDB[today][targetClass][type];
+
+      if (isAlreadySubmitted) {
+        // BATALKAN SUBMIT (UNSUBMIT)
+        delete dailySubmissionsDB[today][targetClass][type];
+        safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
+        pushRealtimeUpdate(`↩️ ${activeTeacher} cancelled/unsubmitted ${type} Report for Class ${targetClass}`);
+        showToast(`Today's ${type} Report for ${targetClass} Unsubmitted!`);
+      } else {
+        // SUBMIT BARU
+        dailySubmissionsDB[today][targetClass][type] = { submittedBy: activeTeacher, time: timeNow };
+        safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
+        pushRealtimeUpdate(`📩 ${activeTeacher} submitted ${type} Report for Class ${targetClass}!`);
+        showToast(`Today's ${type} Report for ${targetClass} Submitted!`);
+      }
+
       renderSubmissionStatusBoard();
+      updateSubmitButtonsUI();
+    }
+
+    // MEMPERBARUI WARNA & LABEL TOMBOL SUBMIT/UNSUBMIT SECARA DINAMIS
+    function updateSubmitButtonsUI() {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Update Assessment Button
+      const classAssData = dailySubmissionsDB[today]?.[activeClass]?.['Assessment'];
+      const btnAss = document.getElementById('btnSubmitAssessmentReport');
+      const lblAss = document.getElementById('labelSubmitAssessment');
+      const iconAss = document.getElementById('iconSubmitAssessment');
+
+      if (btnAss && lblAss) {
+        if (classAssData) {
+          btnAss.className = "relative z-10 px-5 py-3 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center space-x-2 shrink-0";
+          lblAss.textContent = "Unsubmit Today's Assessment Report";
+          if (iconAss) iconAss.className = "fa-solid fa-rotate-left text-base";
+        } else {
+          btnAss.className = "relative z-10 px-5 py-3 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center space-x-2 shrink-0";
+          lblAss.textContent = "Submit Today's Assessment Report";
+          if (iconAss) iconAss.className = "fa-solid fa-circle-check text-base";
+        }
+      }
+
+      // Update Attendance Button
+      const classAttData = dailySubmissionsDB[today]?.[attendanceClass]?.['Attendance'];
+      const btnAtt = document.getElementById('btnSubmitAttendanceReport');
+      if (btnAtt) {
+        if (classAttData) {
+          btnAtt.className = "h-[38px] px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center";
+          btnAtt.innerHTML = `<i class="fa-solid fa-rotate-left mr-1.5"></i> Unsubmit Report`;
+        } else {
+          btnAtt.className = "h-[38px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center";
+          btnAtt.innerHTML = `<i class="fa-solid fa-paper-plane mr-1.5"></i> Submit Report`;
+        }
+      }
     }
 
     function renderSubmissionStatusBoard() {
@@ -2005,10 +2069,10 @@
         }
       });
 
-      if (tabName === 'dashboard') { renderClassFilterTabs(); renderStudents(); }
+      if (tabName === 'dashboard') { renderClassFilterTabs(); renderStudents(); updateSubmitButtonsUI(); }
       if (tabName === 'shoutout') renderShoutouts();
       if (tabName === 'calendar') renderAcademicCalendar();
-      if (tabName === 'attendance') { renderAttendanceClassFilterTabs(); loadAttendanceForSelectedDate(); }
+      if (tabName === 'attendance') { renderAttendanceClassFilterTabs(); loadAttendanceForSelectedDate(); updateSubmitButtonsUI(); }
       if (tabName === 'roster') renderRosterTable();
       if (tabName === 'analytics') renderAnalyticsChart();
     }
@@ -2017,12 +2081,14 @@
       activeClass = className;
       renderClassFilterTabs();
       renderStudents();
+      updateSubmitButtonsUI();
     }
 
     function filterAttendanceClass(className) {
       attendanceClass = className;
       renderAttendanceClassFilterTabs();
       loadAttendanceForSelectedDate();
+      updateSubmitButtonsUI();
     }
 
     /* --- DYNAMIC CALENDAR EVENTS & PDF LINK --- */
@@ -2122,14 +2188,14 @@
       if (editStudentId) {
         const s = students.find(st => st.id === editStudentId);
         if (!s) return;
-        title.textContent = "✏️ Edit Student Profile";
+        title.textContent = "Edit Student Profile";
         document.getElementById('inp_student_id').value = s.id;
         document.getElementById('inp_student_name').value = s.name;
         document.getElementById('inp_student_class').value = s.class;
         document.getElementById('inp_student_level').value = s.level;
         document.getElementById('inp_student_teacher').value = s.assignedTeacher || '';
       } else {
-        title.textContent = `➕ Add New Student (${currentAcademicYear})`;
+        title.textContent = `Add New Student (${currentAcademicYear})`;
         form.reset();
         document.getElementById('inp_student_id').value = '';
       }
@@ -3362,6 +3428,7 @@
           renderShoutouts();
           renderAcademicCalendar();
           updateCalendarPdfButton();
+          updateSubmitButtonsUI();
         } catch (err) {
           showToast("Invalid backup file format.", true);
         }
