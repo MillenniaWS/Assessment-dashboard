@@ -16,7 +16,26 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- GOOGLE FIREBASE CLOUD SDKs (COMPAT VERSION FOR HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <script>
+    // Config Firebase Akun MWS Kamu
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_lm9ZJ3JYHCfE-DZFcny16ZTCtetAWPU",
+      authDomain: "assessment-dashboard-6d944.firebaseapp.com",
+      projectId: "assessment-dashboard-6d944",
+      storageBucket: "assessment-dashboard-6d944.firebasestorage.app",
+      messagingSenderId: "972306658423",
+      appId: "1:972306658423:web:73dae87dbb647cfaf08272",
+      measurementId: "G-GZSJHEC1P0"
+    };
+
+    // Inisialisasi Firebase & Firestore Cloud Database
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     tailwind.config = {
       theme: {
         extend: {
@@ -210,6 +229,12 @@
         </div>
 
         <div class="flex items-center space-x-2 sm:space-x-3 ml-auto">
+          <!-- CLOUD CONNECTION STATUS -->
+          <div id="cloudStatusBadge" class="hidden sm:flex items-center space-x-1.5 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200 text-xs text-emerald-700 font-bold">
+            <i class="fa-solid fa-cloud text-xs animate-pulse"></i>
+            <span class="text-[10px]">Cloud Live</span>
+          </div>
+
           <div class="flex items-center space-x-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs">
             <i id="accountRoleIcon" class="fa-solid fa-user-lock text-amber-500 text-xs"></i>
             <span id="activeTeacherLabel" class="font-extrabold text-amber-600 text-[11px] sm:text-xs">Locked (Log In First)</span>
@@ -558,12 +583,12 @@
               <div class="flex flex-wrap items-center gap-2">
                 <button onclick="promoteAcademicYear()" class="px-4 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-extrabold text-xs rounded-2xl shadow-md transition flex items-center space-x-2">
                   <i class="fa-solid fa-rocket text-sm"></i>
-                  <span> Promote All Students (New Year)</span>
+                  <span>🚀 Promote All Students (New Year)</span>
                 </button>
 
                 <button onclick="openStudentManagerModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-brand-500/20 transition flex items-center space-x-2">
                   <i class="fa-solid fa-user-plus text-sm"></i>
-                  <span> Add New Student</span>
+                  <span>➕ Add New Student</span>
                 </button>
               </div>
             </div>
@@ -1188,7 +1213,7 @@
           </div>
           <div>
             <p class="mb-12">School Principal</p>
-            <p class="underline font-extrabold text-slate-800">Latifah Nur Restiningtyas, S.Pd.</p>
+            <p class="underline font-extrabold text-slate-800">Ms. Latifah, S.Pd.</p>
           </div>
         </div>
       </div>
@@ -1196,10 +1221,8 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT LOGIC WITH REAL-TIME CLOUD FIRESTORE INTEGRATION -->
   <script>
-    const broadcastChannel = new BroadcastChannel('mws_portal_realtime_sync');
-
     const teacherSecurity = {
       "Ms. Mahrukh (Director)": { pass: "8888", class: "ALL", role: "Director" },
       "Ms. Latifah (Principal)": { pass: "9999", class: "ALL", role: "Principal" },
@@ -1304,7 +1327,7 @@
       { name: "Tavisha Lee Moxie", class: "MAUNA KEA", level: "K1", assignedTeacher: "Tr Diya" }
     ];
 
-    // INITIALIZE DYNAMIC STUDENTS DATABASE FROM LOCALSTORAGE WITH ACADEMIC YEAR SNAPSHOTS
+    // INITIALIZE STATE FROM LOCALSTORAGE FIRST (FOR FAST LOADING)
     let savedStudentsData = localStorage.getItem('mws_students_db');
     let students = savedStudentsData ? JSON.parse(savedStudentsData) : rawStudents.map((s, i) => ({ 
       id: i + 1, 
@@ -1354,6 +1377,59 @@
     const yearSelect = document.getElementById('yearSelect');
     const activeTermBadge = document.getElementById('activeTermBadge');
 
+    // --- REALTIME CLOUD FIRESTORE SYNCHRONIZATION ---
+    db.collection("mws_school_data").doc("main_store")
+      .onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          if (data.students) students = data.students;
+          if (data.dailyLogs) dailyLogs = data.dailyLogs;
+          if (data.attendanceDB) attendanceDB = data.attendanceDB;
+          if (data.shoutoutsDB) shoutoutsDB = data.shoutoutsDB;
+          if (data.dailySubmissionsDB) dailySubmissionsDB = data.dailySubmissionsDB;
+          if (data.teacherEmotionsDB) teacherEmotionsDB = data.teacherEmotionsDB;
+          if (data.academicCalendarEvents) academicCalendarEvents = data.academicCalendarEvents;
+          if (data.calendarPdfUrl !== undefined) calendarPdfUrl = data.calendarPdfUrl;
+          if (data.notificationsDB) notificationsDB = data.notificationsDB;
+
+          // Save local sync cache
+          localStorage.setItem('mws_students_db', JSON.stringify(students));
+          localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs));
+          localStorage.setItem('mws_attendance_db', JSON.stringify(attendanceDB));
+          localStorage.setItem('mws_shoutouts_db', JSON.stringify(shoutoutsDB));
+          localStorage.setItem('mws_daily_submissions', JSON.stringify(dailySubmissionsDB));
+          localStorage.setItem('mws_teacher_emotions', JSON.stringify(teacherEmotionsDB));
+          localStorage.setItem('mws_calendar_events', JSON.stringify(academicCalendarEvents));
+          localStorage.setItem('mws_calendar_pdf_url', calendarPdfUrl);
+          localStorage.setItem('mws_notifications_db', JSON.stringify(notificationsDB));
+
+          const cloudBadge = document.getElementById('cloudStatusBadge');
+          if (cloudBadge) cloudBadge.classList.remove('hidden');
+
+          reloadLocalStorageState();
+        }
+      }, (error) => {
+        console.error("Firestore cloud sync error:", error);
+      });
+
+    // FUNGSI UNTUK MENGIRIM DATA KE GOOGLE FIREBASE CLOUD
+    function saveToCloud() {
+      if (!db) return;
+      db.collection("mws_school_data").doc("main_store").set({
+        students: students,
+        dailyLogs: dailyLogs,
+        attendanceDB: attendanceDB,
+        shoutoutsDB: shoutoutsDB,
+        dailySubmissionsDB: dailySubmissionsDB,
+        teacherEmotionsDB: teacherEmotionsDB,
+        academicCalendarEvents: academicCalendarEvents,
+        calendarPdfUrl: calendarPdfUrl,
+        notificationsDB: notificationsDB,
+        lastUpdatedBy: activeTeacher || 'System',
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch(err => console.error("Cloud save error:", err));
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const todayStr = new Date().toISOString().split('T')[0];
       document.getElementById('inp_date').value = todayStr;
@@ -1386,12 +1462,6 @@
           }
         }
       });
-
-      broadcastChannel.onmessage = (event) => {
-        if (event.data && event.data.type === 'SYNC_DATA') reloadLocalStorageState();
-      };
-
-      window.addEventListener('storage', () => reloadLocalStorageState());
 
       document.getElementById('searchInput').addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase();
@@ -1596,23 +1666,11 @@
     function safeSaveLocalStorage(key, dataArray) {
       try {
         localStorage.setItem(key, typeof dataArray === 'string' ? dataArray : JSON.stringify(dataArray));
+        saveToCloud(); // OTOMATIS KIRIM KE CLOUD GOOGLE FIREBASE
         return true;
       } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-          if (Array.isArray(dailyLogs)) {
-            dailyLogs.forEach(l => { if (l.evidence && l.evidence.startsWith('data:image')) l.evidence = ''; });
-            try { localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs)); } catch(r){}
-          }
-          try {
-            localStorage.setItem(key, typeof dataArray === 'string' ? dataArray : JSON.stringify(dataArray));
-            showToast("⚠️ Memory optimized!", false);
-            return true;
-          } catch (retryErr) {
-            showToast("⚠️ Local storage full! Saved text content.", false);
-            return false;
-          }
-        }
-        return false;
+        saveToCloud();
+        return true;
       }
     }
 
@@ -1648,19 +1706,6 @@
     }
 
     function reloadLocalStorageState() {
-      let savedStudentsData = localStorage.getItem('mws_students_db');
-      if (savedStudentsData) students = JSON.parse(savedStudentsData);
-
-      academicCalendarEvents = JSON.parse(localStorage.getItem('mws_calendar_events')) || initialAcademicCalendarEvents;
-      calendarPdfUrl = localStorage.getItem('mws_calendar_pdf_url') || '';
-
-      dailyLogs = JSON.parse(localStorage.getItem('mws_daily_logs')) || [];
-      attendanceDB = JSON.parse(localStorage.getItem('mws_attendance_db')) || {};
-      dailySubmissionsDB = JSON.parse(localStorage.getItem('mws_daily_submissions')) || {};
-      teacherEmotionsDB = JSON.parse(localStorage.getItem('mws_teacher_emotions')) || [];
-      shoutoutsDB = JSON.parse(localStorage.getItem('mws_shoutouts_db')) || [];
-      notificationsDB = JSON.parse(localStorage.getItem('mws_notifications_db')) || [];
-
       renderClassFilterTabs();
       renderAttendanceClassFilterTabs();
       renderStudents();
@@ -1685,7 +1730,6 @@
           });
           safeSaveLocalStorage('mws_notifications_db', notificationsDB);
         }
-        if (window.broadcastChannel) broadcastChannel.postMessage({ type: 'SYNC_DATA' });
         renderNotifications();
       } catch(err){}
     }
