@@ -3576,6 +3576,10 @@
       if (event.target.files && event.target.files[0]) fileReader.readAsText(event.target.files[0]);
     }
   </script>
-  <script src="firestore-handlers.js"></script>
+ <!-- App Helpers (UI & Modal Management) - LOAD FIRST -->
+<script src="app-helpers.js"></script>
+
+<!-- Firestore Handlers (Real-time Sync & Data Management) - LOAD SECOND -->
+<script src="firestore-handlers.js"></script>
 </body>
 </html>
