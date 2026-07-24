@@ -2732,24 +2732,26 @@
         clearTimeout(cloudSaveTimer);
         updateCloudStatus("saving");
         cloudSaveTimer = setTimeout(() => {
+          const cloudPayload = {
+            students: students,
+            dailyLogs: dailyLogs,
+            attendanceDB: attendanceDB,
+            shoutoutsDB: shoutoutsDB,
+            dailySubmissionsDB: dailySubmissionsDB,
+            teacherEmotionsDB: teacherEmotionsDB,
+            academicCalendarEvents: academicCalendarEvents,
+            calendarPdfUrl: calendarPdfUrl,
+            notificationsDB: notificationsDB,
+            lastUpdatedBy: activeTeacher || "System",
+            updatedAt: new Date().toISOString(),
+          };
+
           db.collection("mws_school_data")
             .doc("main_store")
-            .set(
-              {
-                students: students,
-                dailyLogs: dailyLogs,
-                attendanceDB: attendanceDB,
-                shoutoutsDB: shoutoutsDB,
-                dailySubmissionsDB: dailySubmissionsDB,
-                teacherEmotionsDB: teacherEmotionsDB,
-                academicCalendarEvents: academicCalendarEvents,
-                calendarPdfUrl: calendarPdfUrl,
-                notificationsDB: notificationsDB,
-                lastUpdatedBy: activeTeacher || "System",
-                updatedAt: new Date().toISOString(),
-              },
-              { merge: true },
-            )
+            // Replace each listed top-level field as a whole. A recursive
+            // `merge: true` keeps deleted nested submission keys in Firestore,
+            // causing Unsubmit to be immediately reverted by the live listener.
+            .set(cloudPayload, { mergeFields: Object.keys(cloudPayload) })
             .then(() => updateCloudStatus("live"))
             .catch((error) => {
               console.error("Cloud save error:", error);
@@ -3483,6 +3485,13 @@
           dailySubmissionsDB[today][targetClass][type]
         ) {
           delete dailySubmissionsDB[today][targetClass][type];
+
+          if (Object.keys(dailySubmissionsDB[today][targetClass]).length === 0) {
+            delete dailySubmissionsDB[today][targetClass];
+          }
+          if (Object.keys(dailySubmissionsDB[today]).length === 0) {
+            delete dailySubmissionsDB[today];
+          }
 
           safeSaveLocalStorage("mws_daily_submissions", dailySubmissionsDB);
 
@@ -4759,9 +4768,9 @@
             } else if (l.evidence.startsWith("data:image")) {
               evidenceHtml = `
               <div class="mt-2">
-                <a href="${l.evidence}" target="_blank" class="block relative group overflow-hidden rounded-xl border border-slate-200">
-                  <img src="${l.evidence}" alt="Evidence" class="h-44 w-full object-cover bg-slate-100 hover:scale-105 transition duration-300">
-                  <span class="absolute bottom-2 right-2 bg-black/70 text-white font-bold text-[10px] px-2 py-1 rounded-lg"><i class="fa-solid fa-up-right-from-square mr-1"></i>Expand Photo</span>
+                <a href="${l.evidence}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-extrabold text-[11px] transition shadow-sm">
+                  <i class="fa-solid fa-image text-amber-600"></i>
+                  <span>Open Image</span>
                 </a>
               </div>
             `;
