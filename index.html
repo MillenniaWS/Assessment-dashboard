@@ -21,6 +21,7 @@
 
     <!-- GOOGLE FIREBASE CLOUD SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
@@ -37,6 +38,7 @@
       };
 
       firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
       const db = firebase.firestore();
 
       tailwind.config = {
@@ -1585,7 +1587,7 @@
         </div>
         <div>
           <h3 id="pinModalTeacherName" class="font-extrabold text-slate-800 text-base">Enter PIN Code</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Security Passcode Required</p>
+          <p class="text-xs text-slate-400 mt-0.5">PIN or Password Required</p>
         </div>
 
         <form onsubmit="verifyPasscode(event)" class="space-y-3">
@@ -1595,8 +1597,9 @@
             id="inp_passcode"
             name="password"
             autocomplete="current-password"
-            maxlength="4"
-            placeholder="••••"
+            minlength="6"
+            maxlength="64"
+            placeholder="Enter PIN or password"
             class="w-3/4 text-center text-2xl font-mono p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50"
           />
 
@@ -1617,6 +1620,7 @@
             </button>
             <button
               type="submit"
+              id="btnUnlock"
               class="w-1/2 py-2 rounded-xl bg-brand-600 text-white font-bold text-xs hover:bg-brand-700 transition"
             >
               Unlock
@@ -2157,14 +2161,54 @@
 
     <script>
       const teacherSecurity = {
-        "Ms. Mahrukh (Director)": { pass: "1604", class: "ALL", role: "Director" },
-        "Ms. Latifah (Principal)": { pass: "0710", class: "ALL", role: "Principal" },
-        "Tr Nanda": { pass: "1801", class: "DJEBEL CHELIA", role: "Teacher" },
-        "Tr Afi": { pass: "0805", class: "DJEBEL CHELIA", role: "Teacher" },
-        "Tr Widya": { pass: "1708", class: "SNOWDON", role: "Teacher" },
-        "Tr Sindy": { pass: "1304", class: "SNOWDON", role: "Teacher" },
-        "Tr Yunda": { pass: "2910", class: "MAUNA KEA", role: "Teacher" },
-        "Tr Diya": { pass: "0506", class: "MAUNA KEA", role: "Teacher" },
+        "Ms. Mahrukh (Director)": {
+          id: "mahrukh",
+          email: "mahrukh@millennia21.id",
+          class: "ALL",
+          role: "Director",
+        },
+        "Ms. Latifah (Principal)": {
+          id: "latifah",
+          email: "latifah@millennia21.id",
+          class: "ALL",
+          role: "Principal",
+        },
+        "Tr Nanda": {
+          id: "nanda",
+          email: "nanda@millennia21.id",
+          class: "DJEBEL CHELIA",
+          role: "Teacher",
+        },
+        "Tr Afi": {
+          id: "afi",
+          email: "afiyanti.hardiansari@millennia21.id",
+          class: "DJEBEL CHELIA",
+          role: "Teacher",
+        },
+        "Tr Widya": {
+          id: "widya",
+          email: "widya@millennia21.id",
+          class: "SNOWDON",
+          role: "Teacher",
+        },
+        "Tr Sindy": {
+          id: "sindy",
+          email: "sindy@millennia21.id",
+          class: "SNOWDON",
+          role: "Teacher",
+        },
+        "Tr Yunda": {
+          id: "yunda",
+          email: "aprimaputri@millennia21.id",
+          class: "MAUNA KEA",
+          role: "Teacher",
+        },
+        "Tr Diya": {
+          id: "diya",
+          email: "diya@millennia21.id",
+          class: "MAUNA KEA",
+          role: "Teacher",
+        },
       };
 
       const initialAcademicCalendarEvents = [
@@ -2425,8 +2469,10 @@
       let shoutoutsDB = JSON.parse(localStorage.getItem("mws_shoutouts_db")) || [];
       let notificationsDB = JSON.parse(localStorage.getItem("mws_notifications_db")) || [];
 
-      let activeTeacher = sessionStorage.getItem("mws_active_teacher") || null;
-      let activeRole = sessionStorage.getItem("mws_active_role") || null;
+      // A teacher is active only after Firebase verifies the server-issued token.
+      // Old local PIN sessions are deliberately ignored.
+      let activeTeacher = null;
+      let activeRole = null;
       let selectedTeacherCandidate = null;
       let activeClass = "ALL";
       let attendanceClass = "ALL";
@@ -2451,6 +2497,8 @@
       let cloudReady = false;
       let cloudWritePending = false;
       let cloudSaveTimer = null;
+      let cloudUnsubscribe = null;
+      let interactiveLoginPending = false;
 
       function updateCloudStatus(state, label) {
         const badge = document.getElementById("cloudStatusBadge");
@@ -2461,6 +2509,11 @@
             classes: ["bg-amber-50", "border-amber-200", "text-amber-700"],
             icon: "fa-solid fa-cloud-arrow-up text-xs animate-pulse",
             text: "Connecting…",
+          },
+          locked: {
+            classes: ["bg-slate-100", "border-slate-200", "text-slate-600"],
+            icon: "fa-solid fa-lock text-xs",
+            text: "Cloud Locked",
           },
           saving: {
             classes: ["bg-blue-50", "border-blue-200", "text-blue-700"],
@@ -2495,15 +2548,34 @@
         if (text) text.textContent = label || selected.text;
       }
 
-      // One shared Firestore document keeps the existing dashboard data model
-      // compatible while broadcasting updates to every open device.
-      try {
-        if (typeof db !== "undefined" && db) {
-          updateCloudStatus("connecting");
-          const cloudDocument = db.collection("mws_school_data").doc("main_store");
+      function stopCloudSync() {
+        if (cloudUnsubscribe) {
+          cloudUnsubscribe();
+          cloudUnsubscribe = null;
+        }
+        cloudReady = false;
+        cloudWritePending = false;
+        clearTimeout(cloudSaveTimer);
+      }
 
-          cloudDocument
-            .onSnapshot(
+      // Start reading the shared document only after Firebase Auth has accepted
+      // a server-issued MWS teacher token.
+      function startCloudSync() {
+        stopCloudSync();
+
+        return new Promise((resolve, reject) => {
+          try {
+            if (typeof db === "undefined" || !db || !auth.currentUser) {
+              updateCloudStatus("locked");
+              reject(new Error("Authenticated cloud session is not available."));
+              return;
+            }
+
+            updateCloudStatus("connecting");
+            const cloudDocument = db.collection("mws_school_data").doc("main_store");
+            let firstSnapshotHandled = false;
+
+            cloudUnsubscribe = cloudDocument.onSnapshot(
               { includeMetadataChanges: true },
               (doc) => {
                 if (doc.exists) {
@@ -2539,24 +2611,113 @@
                 } else if (!doc.exists) {
                   saveToCloud();
                 }
+
+                if (!firstSnapshotHandled) {
+                  firstSnapshotHandled = true;
+                  resolve();
+                }
               },
               (error) => {
                 console.error("Firestore cloud sync error:", error);
                 cloudReady = false;
                 updateCloudStatus("error", error && error.code === "permission-denied" ? "Access Denied" : "Sync Error");
+                if (!firstSnapshotHandled) {
+                  firstSnapshotHandled = true;
+                  reject(error);
+                }
               },
             );
-        } else {
-          updateCloudStatus("error", "Cloud Unavailable");
-        }
-      } catch (e) {
-        console.error("Firestore not connected:", e);
-        updateCloudStatus("error", "Cloud Unavailable");
+          } catch (error) {
+            console.error("Firestore not connected:", error);
+            updateCloudStatus("error", "Cloud Unavailable");
+            reject(error);
+          }
+        });
       }
 
+      function findTeacherByEmail(email) {
+        const normalizedEmail = String(email || "").trim().toLowerCase();
+        return (
+          Object.entries(teacherSecurity).find(
+            ([, profile]) => profile.email.toLowerCase() === normalizedEmail,
+          ) || null
+        );
+      }
+
+      async function activateFirebaseTeacher(user) {
+        const teacherEntry = findTeacherByEmail(user.email);
+
+        if (!teacherEntry) {
+          throw new Error("This Firebase account is not an authorized MWS teacher.");
+        }
+
+        const [teacherName, profile] = teacherEntry;
+        activeTeacher = teacherName;
+        activeRole = profile.role;
+        sessionStorage.setItem("mws_active_teacher", activeTeacher);
+        sessionStorage.setItem("mws_active_role", activeRole);
+        applyTeacherProfile(activeTeacher);
+        await startCloudSync();
+      }
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          stopCloudSync();
+          activeTeacher = null;
+          activeRole = null;
+          sessionStorage.removeItem("mws_active_teacher");
+          sessionStorage.removeItem("mws_active_role");
+          updateCloudStatus("locked");
+          return;
+        }
+
+        try {
+          await activateFirebaseTeacher(user);
+
+          const passcodeInput = document.getElementById("inp_passcode");
+          const passcodeModal = document.getElementById("passcodeModal");
+          if (passcodeModal) passcodeModal.classList.add("hidden");
+          if (passcodeInput) passcodeInput.value = "";
+
+          if (interactiveLoginPending) {
+            showToast(`Logged in as ${activeTeacher}`);
+            const todayStr = new Date().toISOString().split("T")[0];
+            const alreadyCheckedInToday = teacherEmotionsDB.some(
+              (item) => item.teacher === activeTeacher && item.date === todayStr,
+            );
+
+            if (!alreadyCheckedInToday) {
+              const greeting = document.getElementById("emotionCheckinGreeting");
+              if (greeting) greeting.textContent = `Hi ${activeTeacher}! How are you feeling today?`;
+              document.getElementById("emotionCheckinModal").classList.remove("hidden");
+            } else {
+              switchTab("dashboard");
+            }
+          }
+        } catch (error) {
+          console.error("Secure login session rejected:", error);
+          stopCloudSync();
+          await auth.signOut();
+          updateCloudStatus("error", "Login Rejected");
+          showToast("Secure login could not be verified. Please try again.", true);
+        } finally {
+          interactiveLoginPending = false;
+          const unlockButton = document.getElementById("btnUnlock");
+          if (unlockButton) {
+            unlockButton.disabled = false;
+            unlockButton.textContent = "Unlock";
+          }
+        }
+      });
+
+      auth
+        .setPersistence(firebase.auth.Auth.Persistence.SESSION)
+        .catch((error) => console.error("Firebase Auth persistence error:", error));
+
       function saveToCloud() {
-        if (typeof db === "undefined" || !db) {
-          updateCloudStatus("error", "Cloud Unavailable");
+        if (typeof db === "undefined" || !db || !auth.currentUser) {
+          updateCloudStatus("locked");
+          showToast("Please log in before saving.", true);
           return;
         }
 
@@ -2608,11 +2769,7 @@
         if (attPicker) attPicker.value = todayStr;
         if (recapPicker) recapPicker.value = todayStr.substring(0, 7);
 
-        if (activeTeacher) {
-          applyTeacherProfile(activeTeacher);
-        } else {
-          switchTab("landing");
-        }
+        switchTab("landing");
 
         renderSubmissionStatusBoard();
         renderTeacherEmotionRecap();
@@ -2626,7 +2783,9 @@
           if (document.visibilityState === "visible") checkDayChangeAutoReset();
         });
         window.addEventListener("offline", () => updateCloudStatus("offline"));
-        window.addEventListener("online", () => updateCloudStatus(cloudReady ? "live" : "connecting"));
+        window.addEventListener("online", () =>
+          updateCloudStatus(auth.currentUser ? (cloudReady ? "live" : "connecting") : "locked"),
+        );
 
         document.addEventListener("click", (e) => {
           const notifDropdown = document.getElementById("notifDropdown");
@@ -2752,8 +2911,8 @@
       }
 
       function promoteAcademicYear() {
-        if (activeRole === "Director") {
-          showToast("👑 Read-Only Mode: Kenaikan kelas hanya oleh Principal/Guru.", true);
+        if (activeRole !== "Principal") {
+          showToast("🔒 Kenaikan kelas hanya dapat dilakukan oleh Principal.", true);
           return;
         }
 
@@ -3026,7 +3185,7 @@
         const modal = document.getElementById("passcodeModal");
 
         if (userHidden) userHidden.value = teacherName;
-        if (pinTitle) pinTitle.textContent = `Enter PIN for ${teacherName}`;
+        if (pinTitle) pinTitle.textContent = `Enter PIN / Password for ${teacherName}`;
         if (passcodeInput) passcodeInput.value = "";
         if (errorBox) errorBox.classList.add("hidden");
         if (rememberDevice) {
@@ -3036,48 +3195,56 @@
         if (passcodeInput) passcodeInput.focus();
       }
 
-      function verifyPasscode(event) {
+      async function verifyPasscode(event) {
         if (event) event.preventDefault();
 
         const passcodeInput = document.getElementById("inp_passcode");
         const rememberDevice = document.getElementById("chkRememberDevice");
+        const unlockButton = document.getElementById("btnUnlock");
+        const errorBox = document.getElementById("passcodeError");
         const username =
           selectedTeacherCandidate || document.getElementById("username_hidden").value;
         const profile = teacherSecurity[username];
-        const passcode = passcodeInput ? passcodeInput.value : "";
+        const passcode = passcodeInput ? passcodeInput.value.trim() : "";
 
-        if (profile && profile.pass === passcode) {
+        if (!profile || passcode.length < 6 || passcode.length > 64) {
+          if (errorBox) {
+            errorBox.textContent = "Enter your PIN or password (minimum 6 characters).";
+            errorBox.classList.remove("hidden");
+          }
+          return;
+        }
+
+        if (unlockButton) {
+          unlockButton.disabled = true;
+          unlockButton.textContent = "Checking…";
+        }
+        if (errorBox) errorBox.classList.add("hidden");
+
+        try {
           if (rememberDevice && rememberDevice.checked) {
             localStorage.setItem("mws_remembered_teacher", username);
           } else if (localStorage.getItem("mws_remembered_teacher") === username) {
             localStorage.removeItem("mws_remembered_teacher");
           }
 
-          activeTeacher = username;
-          activeRole = profile.role;
+          interactiveLoginPending = true;
           selectedTeacherCandidate = null;
-          sessionStorage.setItem("mws_active_teacher", activeTeacher);
-          sessionStorage.setItem("mws_active_role", activeRole);
-
-          document.getElementById("passcodeModal").classList.add("hidden");
-          if (passcodeInput) passcodeInput.value = "";
-          applyTeacherProfile(activeTeacher);
-          showToast(`Logged in as ${activeTeacher}`);
-
-          const todayStr = new Date().toISOString().split("T")[0];
-          const alreadyCheckedInToday = teacherEmotionsDB.some(
-            (item) => item.teacher === activeTeacher && item.date === todayStr,
-          );
-
-          if (!alreadyCheckedInToday) {
-            const greeting = document.getElementById("emotionCheckinGreeting");
-            if (greeting) greeting.textContent = `Hi ${activeTeacher}! How are you feeling today?`;
-            document.getElementById("emotionCheckinModal").classList.remove("hidden");
-          } else {
-            switchTab("dashboard");
+          await auth.signInWithEmailAndPassword(profile.email, passcode);
+        } catch (error) {
+          interactiveLoginPending = false;
+          console.error("PIN login failed:", error);
+          if (errorBox) {
+            errorBox.textContent =
+              error && error.code === "auth/too-many-requests"
+                ? "Too many attempts. Please wait before trying again."
+                : "Incorrect PIN. Please try again.";
+            errorBox.classList.remove("hidden");
           }
-        } else {
-          document.getElementById("passcodeError").classList.remove("hidden");
+          if (unlockButton) {
+            unlockButton.disabled = false;
+            unlockButton.textContent = "Unlock";
+          }
         }
       }
 
@@ -3428,8 +3595,8 @@
       }
 
       function openAddCalendarEventModal() {
-        if (activeRole === "Director") {
-          showToast("👑 Read-Only Mode: Adding events disabled.", true);
+        if (activeRole !== "Principal") {
+          showToast("🔒 Calendar management is only available to the Principal.", true);
           return;
         }
         document.getElementById("addCalendarEventModal").classList.remove("hidden");
@@ -3441,6 +3608,10 @@
 
       function saveCalendarEvent(e) {
         e.preventDefault();
+        if (activeRole !== "Principal") {
+          showToast("🔒 Calendar management is only available to the Principal.", true);
+          return;
+        }
         const dateVal = document.getElementById("inp_cal_date").value;
         const titleVal = document.getElementById("inp_cal_title").value.trim();
         const categoryVal = document.getElementById("inp_cal_category").value;
@@ -3471,8 +3642,8 @@
       }
 
       function deleteCalendarEvent(eventId) {
-        if (activeRole === "Director" || activeRole === "Principal") {
-          showToast("👑 Read-Only Mode: Cannot delete events.", true);
+        if (activeRole !== "Principal") {
+          showToast("🔒 Calendar management is only available to the Principal.", true);
           return;
         }
         if (confirm("Delete this calendar event?")) {
@@ -3484,6 +3655,10 @@
       }
 
       function openSetPdfModal() {
+        if (activeRole !== "Principal") {
+          showToast("🔒 Calendar management is only available to the Principal.", true);
+          return;
+        }
         document.getElementById("inp_cal_pdf_url").value = calendarPdfUrl;
         document.getElementById("setPdfModal").classList.remove("hidden");
       }
@@ -3494,6 +3669,10 @@
 
       function saveCalendarPdfUrl(e) {
         e.preventDefault();
+        if (activeRole !== "Principal") {
+          showToast("🔒 Calendar management is only available to the Principal.", true);
+          return;
+        }
         calendarPdfUrl = document.getElementById("inp_cal_pdf_url").value.trim();
         safeSaveLocalStorage("mws_calendar_pdf_url", calendarPdfUrl);
         updateCalendarPdfButton();
@@ -3514,8 +3693,8 @@
       }
 
       function openStudentManagerModal(editStudentId = null) {
-        if (activeRole === "Director") {
-          showToast("👑 Read-Only View: Editing database is disabled.", true);
+        if (activeRole !== "Principal") {
+          showToast("🔒 Student database management is only available to the Principal.", true);
           return;
         }
 
@@ -3547,6 +3726,10 @@
 
       function saveStudentToDatabase(e) {
         e.preventDefault();
+        if (activeRole !== "Principal") {
+          showToast("🔒 Student database management is only available to the Principal.", true);
+          return;
+        }
         const sId = document.getElementById("inp_student_id").value;
         const sName = document.getElementById("inp_student_name").value.trim();
         const sClass = document.getElementById("inp_student_class").value.trim().toUpperCase();
@@ -3591,8 +3774,8 @@
       }
 
       function deleteStudentFromDatabase(studentId) {
-        if (activeRole === "Director") {
-          showToast("👑 Read-Only View Mode: Cannot delete students.", true);
+        if (activeRole !== "Principal") {
+          showToast("🔒 Student database management is only available to the Principal.", true);
           return;
         }
         const s = students.find((st) => st.id === studentId);
@@ -4953,8 +5136,8 @@
       }
 
       function importDataJSON(event) {
-        if (activeRole === "Director" || activeRole === "Principal") {
-          showToast("👑 Executive Read-Only Mode: Restore is disabled.", true);
+        if (activeRole !== "Principal") {
+          showToast("🔒 Backup restore is only available to the Principal.", true);
           return;
         }
         const fileReader = new FileReader();
