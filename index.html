@@ -19,6 +19,7 @@
   <!-- GOOGLE FIREBASE CLOUD SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
 
   <script>
     // Config Firebase Akun MWS
@@ -1817,61 +1818,71 @@
       if (modal) modal.classList.add('hidden'); 
     }
 
-    function selectTeacherFromList(tName) {
-      selectedTeacherCandidate = tName;
-      closeChooseAccountModal();
-      
-      const userHidden = document.getElementById('username_hidden');
-      const pinTitle = document.getElementById('pinModalTeacherName');
-      const passcodeInp = document.getElementById('inp_passcode');
-      const errBox = document.getElementById('passcodeError');
-      const modal = document.getElementById('passcodeModal');
+    function selectTeacherFromList(teacherName) {
+  currentTeacher = teacherName;
+  currentRole = getRoleFromTeacherName(teacherName);
+  
+  // Show PIN modal
+  document.getElementById('username_hidden').value = teacherName;
+  document.getElementById('pinModalTeacherName').textContent = `${teacherName} - Enter PIN`;
+  document.getElementById('passcodeModal').classList.remove('hidden');
+  document.getElementById('chooseAccountModal').classList.add('hidden');
+  
+  // ===== NEW CODE =====
+  // Start real-time listeners after login
+  setupRealtimeListeners();
+  
+  // Load initial data
+  loadNotifications();
+  loadTeacherEmotions();
+  loadSubmissionStatuses();
+  loadShoutouts();
+  // ===== END NEW CODE =====
+}
 
-      if (userHidden) userHidden.value = tName;
-      if (pinTitle) pinTitle.textContent = `Enter PIN for ${tName}`;
-      
-      const savedPinForTeacher = localStorage.getItem(`mws_pin_${tName}`);
-      if (passcodeInp) passcodeInp.value = savedPinForTeacher || '';
-      if (errBox) errBox.classList.add('hidden');
-      if (modal) modal.classList.remove('hidden');
-      if (passcodeInp) passcodeInp.focus();
-    }
-
-    function verifyPasscode(e) {
-      if(e) e.preventDefault();
-      const enteredPin = document.getElementById('inp_passcode').value;
-      const sec = teacherSecurity[selectedTeacherCandidate];
-      const rememberDevice = document.getElementById('chkRememberDevice').checked;
-
-      if (sec && enteredPin === sec.pass) {
-        if (rememberDevice) {
-          localStorage.setItem(`mws_pin_${selectedTeacherCandidate}`, enteredPin);
-          localStorage.setItem('mws_remembered_teacher', selectedTeacherCandidate);
-        }
-        document.getElementById('passcodeModal').classList.add('hidden');
-        activeTeacher = selectedTeacherCandidate;
-        activeRole = sec.role;
-
-        sessionStorage.setItem('mws_active_teacher', activeTeacher);
-        sessionStorage.setItem('mws_active_role', activeRole);
-
-        applyTeacherProfile(activeTeacher);
-        showToast(`Logged in as ${activeTeacher}`);
-
-        const todayStr = new Date().toISOString().split('T')[0];
-        const alreadyCheckedInToday = teacherEmotionsDB.some(item => item.teacher === activeTeacher && item.date === todayStr);
-
-        if (!alreadyCheckedInToday) {
-          const greet = document.getElementById('emotionCheckinGreeting');
-          if (greet) greet.textContent = `Hi ${activeTeacher}! How are you feeling today?`;
-          document.getElementById('emotionCheckinModal').classList.remove('hidden');
-        } else {
-          switchTab('dashboard');
-        }
-      } else {
-        document.getElementById('passcodeError').classList.remove('hidden');
-      }
-    }
+    function verifyPasscode(event) {
+  event.preventDefault();
+  
+  const passcode = document.getElementById('inp_passcode').value;
+  const username = document.getElementById('username_hidden').value;
+  
+  // Simple PIN check (change PIN codes as needed)
+  const validPINs = {
+    'Ms. Mahrukh (Director)': '1604',
+    'Ms. Latifah (Principal)': '0710',
+    'Tr Nanda': '1801',
+    'Tr Afi': '0805',
+    'Tr Widya': '1708',
+    'Tr Sindy': '1304',
+    'Tr Yunda': '2910',
+    'Tr Diya': '0506'
+  };
+  
+  if (validPINs[username] === passcode) {
+    // Success!
+    closeModal('passcodeModal');
+    
+    // Update UI
+    const roleIcon = document.getElementById('accountRoleIcon');
+    const roleLabel = document.getElementById('activeTeacherLabel');
+    
+    roleIcon.className = 'fa-solid fa-user-check text-emerald-500 text-xs';
+    roleLabel.textContent = `✅ ${currentTeacher}`;
+    roleLabel.className = 'font-extrabold text-emerald-600 text-[11px] sm:text-xs';
+    
+    showToastNotification(`✅ Welcome back, ${currentTeacher}!`, 'success');
+    
+    // ===== KEY PART: THIS STARTS EVERYTHING =====
+    setupRealtimeListeners();
+    loadNotifications();
+    loadTeacherEmotions();
+    loadSubmissionStatuses();
+    loadShoutouts();
+    // ===== END KEY PART =====
+  } else {
+    document.getElementById('passcodeError').classList.remove('hidden');
+  }
+}
 
     function cancelPasscode() { document.getElementById('passcodeModal').classList.add('hidden'); }
 
@@ -3565,5 +3576,6 @@
       if (event.target.files && event.target.files[0]) fileReader.readAsText(event.target.files[0]);
     }
   </script>
+  <script src="firestore-handlers.js"></script>
 </body>
 </html>
