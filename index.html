@@ -16,12 +16,25 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- FIREBASE / FIRESTORE SDK (CLOUD SYNC) -->
+  <!-- GOOGLE FIREBASE CLOUD SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
   <script>
+    // Config Firebase Akun MWS
+    const firebaseConfig = {
+      apiKey: "AIzaSyA_lm9ZJ3JYHCfE-DZFcny16ZTCtetAWPU",
+      authDomain: "assessment-dashboard-6d944.firebaseapp.com",
+      projectId: "assessment-dashboard-6d944",
+      storageBucket: "assessment-dashboard-6d944.firebasestorage.app",
+      messagingSenderId: "972306658423",
+      appId: "1:972306658423:web:73dae87dbb647cfaf08272",
+      measurementId: "G-GZSJHEC1P0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     tailwind.config = {
       theme: {
         extend: {
@@ -70,7 +83,7 @@
 <body class="font-sans antialiased text-slate-800">
 
   <!-- INSTANT TOAST NOTIFICATION -->
-  <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-[100] flex items-center space-x-3 transition-all transform translate-y-20 opacity-0 pointer-events-none border border-slate-700">
+  <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-[120] flex items-center space-x-3 transition-all transform translate-y-20 opacity-0 pointer-events-none border border-slate-700">
     <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
     <span id="toastMessage" class="text-xs font-bold">Action Completed!</span>
   </div>
@@ -78,10 +91,11 @@
   <div class="flex flex-col md:flex-row h-screen overflow-hidden">
 
     <!-- DESKTOP SIDEBAR -->
-    <aside id="mainSidebar" class="w-60 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex z-20 shrink-0 sidebar-transition relative">
+    <aside id="mainSidebar" class="w-60 bg-white border-r border-slate-200 flex flex-col justify-between hidden md:flex z-30 shrink-0 sidebar-transition relative">
       
-      <button onclick="toggleSidebarCollapse()" id="btnCollapseSidebar" class="absolute -right-3 top-6 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-brand-600 shadow-sm z-30 transition">
-        <i id="collapseIcon" class="fa-solid fa-chevron-left text-[10px]"></i>
+      <!-- FIXED FLOATING TOGGLE BUTTON -->
+      <button onclick="toggleSidebarCollapse()" id="btnCollapseSidebar" class="absolute -right-3.5 top-6 w-7 h-7 bg-white border border-slate-300 rounded-full flex items-center justify-center text-slate-600 hover:text-brand-600 shadow-md z-50 transition transform hover:scale-110">
+        <i id="collapseIcon" class="fa-solid fa-chevron-left text-[11px]"></i>
       </button>
 
       <div>
@@ -140,7 +154,7 @@
         </nav>
       </div>
 
-      <!-- SIDEBAR CONTROLS: ACADEMIC YEAR & TERM -->
+      <!-- SIDEBAR CONTROLS -->
       <div class="p-3.5 m-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 overflow-hidden sidebar-text">
         <div>
           <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Academic Year</label>
@@ -201,7 +215,7 @@
     <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
 
       <!-- TOP HEADER -->
-      <header class="bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
+      <header class="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3">
         <div class="flex items-center space-x-3 md:hidden">
           <button onclick="toggleMobileMenu()" class="p-2 rounded-xl bg-slate-100 text-slate-700 text-sm">
             <i class="fa-solid fa-bars"></i>
@@ -215,6 +229,12 @@
         </div>
 
         <div class="flex items-center space-x-2 sm:space-x-3 ml-auto">
+          <!-- CLOUD STATUS -->
+          <div id="cloudStatusBadge" class="hidden sm:flex items-center space-x-1.5 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200 text-xs text-emerald-700 font-bold">
+            <i class="fa-solid fa-cloud text-xs animate-pulse"></i>
+            <span class="text-[10px]">Cloud Live</span>
+          </div>
+
           <div class="flex items-center space-x-1.5 bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs">
             <i id="accountRoleIcon" class="fa-solid fa-user-lock text-amber-500 text-xs"></i>
             <span id="activeTeacherLabel" class="font-extrabold text-amber-600 text-[11px] sm:text-xs">Locked (Log In First)</span>
@@ -226,17 +246,17 @@
             <span class="sm:hidden">LOGIN</span>
           </button>
 
-          <!-- REAL-TIME NOTIFICATION BELL -->
+          <!-- NOTIFICATION BELL -->
           <div class="relative">
             <button id="btnNotifBell" onclick="toggleNotificationMenu(event)" class="relative p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition focus:outline-none">
               <i class="fa-solid fa-bell text-sm"></i>
               <span id="notifBadge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
             </button>
 
-            <div id="notifDropdown" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 hidden z-50 space-y-3">
+            <div id="notifDropdown" class="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 hidden z-[100] space-y-3">
               <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h4 class="font-extrabold text-xs text-slate-800"><i class="fa-solid fa-bolt text-amber-500 mr-1.5"></i> Live Activity Feed</h4>
-                <button onclick="clearNotifications()" class="text-[10px] text-brand-600 font-bold hover:underline">Clear All</button>
+                <button onclick="clearNotifications(event)" class="text-[10px] text-brand-600 font-bold hover:underline">Clear All</button>
               </div>
               <div id="notifList" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar text-xs"></div>
             </div>
@@ -307,21 +327,32 @@
 
         <!-- VIEW 1: DAILY ASSESSMENT -->
         <div id="view-dashboard-content" class="hidden space-y-6">
-          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden flex flex-wrap justify-between items-center gap-4">
-            <div class="relative z-10 max-w-2xl">
+          <div class="relative rounded-3xl bg-gradient-to-r from-brand-600 via-purple-600 to-indigo-600 p-6 sm:p-8 text-white shadow-xl shadow-brand-500/20 overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            
+            <div class="relative z-10 flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px] font-bold tracking-wider uppercase bg-white/20 px-3 py-1 rounded-full" id="activeTermBadge">Term 1 Assessment</span>
                 <span id="homeroomBadge" class="text-[11px] font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full">Homeroom: Active Class</span>
+                <!-- LIVE SUBMISSION STATUS BADGE -->
+                <span id="assessmentSubmitStatusBadge" class="text-[11px] font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-full">Assessment Pending</span>
               </div>
-              <h2 id="welcomeGreeting" class="text-xl sm:text-3xl font-extrabold mt-3">Hi Teacher! Glad to see you! 👋</h2>
+              
+              <h2 id="welcomeGreeting" class="text-lg sm:text-2xl lg:text-3xl font-extrabold mt-2.5 leading-tight text-white">Hi Teacher! Glad to see you! 👋</h2>
+              
               <p class="text-brand-100 text-xs sm:text-sm mt-2 leading-relaxed">Record daily assessment rubrics across 4 Core Domains & Subjects, upload learning evidence, and track individual progress.</p>
             </div>
 
-            <!-- TOGGLE SUBMIT / UNSUBMIT REPORT BUTTON -->
-            <button id="btnSubmitAssessmentReport" onclick="toggleSubmitTodayClassReport('Assessment')" class="relative z-10 px-5 py-3 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center space-x-2 shrink-0 hidden">
-              <i id="btnSubmitAssIcon" class="fa-solid fa-paper-plane text-base"></i>
-              <span id="btnSubmitAssLabel">Submit Today's Assessment Report</span>
-            </button>
+            <!-- ACTION BUTTONS ASSESSMENT -->
+            <div id="assessmentActionButtonsContainer" class="relative z-10 flex flex-col sm:flex-row items-center gap-2 shrink-0">
+              <button onclick="submitClassReportAction('Assessment')" class="px-4 py-2.5 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs rounded-2xl shadow-lg transition flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+                <span>Submit Report</span>
+              </button>
+              <button onclick="unsubmitClassReportAction('Assessment')" class="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs rounded-2xl shadow-md transition flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-rotate-left text-xs"></i>
+                <span>Unsubmit</span>
+              </button>
+            </div>
           </div>
 
           <!-- DYNAMIC CLASS CONTROLS -->
@@ -331,8 +362,8 @@
               <div id="dynamicClassButtonsContainer" class="flex flex-wrap gap-2 items-center"></div>
 
               <div id="teacherAssignToggleContainer" class="ml-2 flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-                <button onclick="setTeacherStudentFilter(true)" id="btnFilterMy11" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-sm transition">My Students</button>
-                <button onclick="setTeacherStudentFilter(false)" id="btnFilterAll22" class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition">All Class Students</button>
+                <button onclick="setTeacherStudentFilter(true)" id="btnFilterMy11" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-sm transition">My 11 Students</button>
+                <button onclick="setTeacherStudentFilter(false)" id="btnFilterAll22" class="px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition">All 22 Students</button>
               </div>
             </div>
 
@@ -398,17 +429,16 @@
                 <span id="shoutoutLogCountBadge" class="text-xs font-bold text-slate-400">0 Recorded</span>
               </div>
 
-              <!-- TABLE SHOUTOUT TRACKER DENGAN FORMAT SEJAJAR RAPI -->
               <div class="overflow-x-auto custom-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[550px]">
+                <table class="w-full text-left border-collapse min-w-[500px]">
                   <thead>
                     <tr class="border-b border-slate-200 text-[10px] text-slate-400 uppercase tracking-wider">
-                      <th class="py-2.5 px-3 align-middle whitespace-nowrap">Date</th>
-                      <th class="py-2.5 px-3 align-middle whitespace-nowrap">Student Name</th>
-                      <th class="py-2.5 px-3 align-middle whitespace-nowrap">Badge Category</th>
-                      <th class="py-2.5 px-3 align-middle whitespace-nowrap">Teacher</th>
-                      <th class="py-2.5 px-3 text-center align-middle whitespace-nowrap">Chat Evidence</th>
-                      <th class="py-2.5 px-3 text-right align-middle whitespace-nowrap">Action</th>
+                      <th class="py-2.5 px-3">Date</th>
+                      <th class="py-2.5 px-3">Student Name</th>
+                      <th class="py-2.5 px-3">Badge Category</th>
+                      <th class="py-2.5 px-3">Teacher</th>
+                      <th class="py-2.5 px-3 text-center">Chat Evidence</th>
+                      <th class="py-2.5 px-3 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody id="shoutoutTableBody" class="divide-y divide-slate-100 text-xs font-semibold text-slate-700"></tbody>
@@ -424,7 +454,7 @@
           </div>
         </div>
 
-        <!-- VIEW 2: ACADEMIC CALENDAR & PDF MANAGER -->
+        <!-- VIEW 2: ACADEMIC CALENDAR -->
         <div id="view-calendar-content" class="hidden space-y-6">
           <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             
@@ -477,35 +507,35 @@
 
         <!-- VIEW 3: ATTENDANCE TRACKER -->
         <div id="view-attendance-content" class="hidden space-y-6">
-          <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
               <h3 class="text-lg sm:text-xl font-extrabold text-slate-800">Daily Attendance Tracker</h3>
               <p class="text-xs text-slate-500 mt-1">Mark student attendance class by class: Present, Sick, Late, or Absent.</p>
             </div>
             
-            <div class="flex flex-wrap items-end gap-2.5 w-full md:w-auto">
-              <div class="flex flex-col">
-                <label class="text-[10px] font-bold text-slate-400 uppercase mb-1">ATTENDANCE DATE</label>
-                <input type="date" id="att_date_picker" onchange="loadAttendanceForSelectedDate()" class="bg-slate-100 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 text-slate-700 focus:outline-none h-[38px]">
+            <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+              <div class="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shrink-0">
+                <span class="text-[10px] font-black text-slate-400 uppercase pl-1.5">DATE</span>
+                <input type="date" id="att_date_picker" onchange="loadAttendanceForSelectedDate()" class="bg-white text-xs font-bold px-2 py-1 rounded-xl border border-slate-200 text-slate-700 focus:outline-none">
               </div>
 
-              <button id="btnMarkPresent" onclick="markAllPresent()" class="h-[38px] px-3.5 py-2 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold text-xs transition flex items-center justify-center">
-                <i class="fa-solid fa-check-double mr-1.5"></i> Mark All Present
+              <button onclick="openMonthlyRecapModal()" class="px-3 py-2 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 font-bold text-xs transition flex items-center shrink-0">
+                <i class="fa-solid fa-chart-line mr-1.5 text-purple-600"></i> Monthly Recap
               </button>
 
-              <button onclick="openMonthlyRecapModal()" class="h-[38px] px-3.5 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold text-xs transition flex items-center justify-center">
-                <i class="fa-solid fa-chart-line mr-1.5"></i> Monthly Recap
-              </button>
-
-              <button id="btnSaveAttendance" onclick="saveAttendance()" class="h-[38px] px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/30 transition flex items-center justify-center">
+              <button id="btnSaveAttendance" onclick="saveAttendance()" class="px-3.5 py-2 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md shadow-brand-500/20 transition flex items-center shrink-0">
                 <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save
               </button>
 
-              <!-- TOGGLE SUBMIT / UNSUBMIT ATTENDANCE REPORT BUTTON -->
-              <button id="btnSubmitAttendanceReport" onclick="toggleSubmitTodayClassReport('Attendance')" class="h-[38px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center hidden">
-                <i id="btnSubmitAttIcon" class="fa-solid fa-paper-plane mr-1.5"></i>
-                <span id="btnSubmitAttLabel">Submit Report</span>
-              </button>
+              <!-- SUBMIT & UNSUBMIT ATTENDANCE -->
+              <div id="attendanceActionButtonsContainer" class="flex items-center space-x-1.5 pl-2 border-l border-slate-200 shrink-0">
+                <button onclick="submitClassReportAction('Attendance')" class="px-3.5 py-2 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs shadow-md transition flex items-center">
+                  <i class="fa-solid fa-paper-plane mr-1.5"></i> Submit
+                </button>
+                <button onclick="unsubmitClassReportAction('Attendance')" class="px-3.5 py-2 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-extrabold text-xs shadow-md transition flex items-center">
+                  <i class="fa-solid fa-rotate-left mr-1.5"></i> Unsubmit
+                </button>
+              </div>
             </div>
           </div>
 
@@ -555,7 +585,7 @@
           </div>
         </div>
 
-        <!-- VIEW 4: STUDENTS ROSTER WITH CLEAN BUTTONS (NO DOUBLE ICON) -->
+        <!-- VIEW 4: STUDENTS ROSTER -->
         <div id="view-roster-content" class="hidden space-y-6">
           <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
@@ -564,14 +594,15 @@
                 <p class="text-xs text-slate-500">Manage student profiles, view history side panels, and promote students for new academic years.</p>
               </div>
 
-              <!-- CLEAN BUTTONS - DOUBLE ICON CLEANUP -->
               <div class="flex flex-wrap items-center gap-2">
-                <button onclick="promoteAcademicYear()" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs rounded-2xl shadow-md transition">
-                  Promote All Students (New Year)
+                <button onclick="promoteAcademicYear()" class="px-4 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 font-extrabold text-xs rounded-2xl shadow-md transition flex items-center space-x-2">
+                  <i class="fa-solid fa-arrow-up-right-dots text-sm"></i>
+                  <span>Promote All Students (New Year)</span>
                 </button>
 
-                <button onclick="openStudentManagerModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-brand-500/20 transition">
-                  + Add New Student
+                <button onclick="openStudentManagerModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-brand-500/20 transition flex items-center space-x-2">
+                  <i class="fa-solid fa-user-plus text-sm"></i>
+                  <span>Add New Student</span>
                 </button>
               </div>
             </div>
@@ -638,11 +669,11 @@
     </div>
   </div>
 
-  <!-- STUDENT MANAGEMENT MODAL (ADD / EDIT STUDENT) -->
+  <!-- MODALS -->
   <div id="studentMgmtModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 id="studentModalTitle" class="font-extrabold text-slate-800 text-base">+ Add New Student to Database</h3>
+        <h3 id="studentModalTitle" class="font-extrabold text-slate-800 text-base">Add New Student</h3>
         <button onclick="closeStudentManagerModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
@@ -656,8 +687,8 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Assigned Class Name</label>
-            <input type="text" id="inp_student_class" required placeholder="e.g. Djebel Chelia / Everest" class="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <label class="block text-xs font-bold text-slate-600 mb-1">Class Name</label>
+            <input type="text" id="inp_student_class" required placeholder="e.g. DJEBEL CHELIA" class="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
           </div>
 
           <div>
@@ -672,22 +703,22 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Assigned Homeroom Teacher</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Assigned Teacher</label>
           <input type="text" id="inp_student_teacher" placeholder="e.g. Tr Nanda" class="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
         </div>
 
         <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-floppy-disk"></i>
           <span>Save Student Data</span>
         </button>
       </form>
     </div>
   </div>
 
-  <!-- CALENDAR EVENT ADD MODAL -->
   <div id="addCalendarEventModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-slate-800 text-base">+ Add Calendar Event</h3>
+        <h3 class="font-extrabold text-slate-800 text-base">Add Calendar Event</h3>
         <button onclick="closeAddCalendarEventModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
@@ -711,18 +742,18 @@
           </select>
         </div>
 
-        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-xl shadow-md transition">
+        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-floppy-disk"></i>
           <span>Add Event to Calendar</span>
         </button>
       </form>
     </div>
   </div>
 
-  <!-- ATTACH PDF POSTER LINK MODAL -->
   <div id="setPdfModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="font-extrabold text-slate-800 text-base">📄 Official Calendar PDF Link</h3>
+        <h3 class="font-extrabold text-slate-800 text-base">Official Calendar PDF Link</h3>
         <button onclick="closeSetPdfModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
@@ -730,7 +761,7 @@
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">Google Drive / PDF URL Link</label>
           <input type="url" id="inp_cal_pdf_url" required placeholder="https://drive.google.com/file/d/..." class="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:outline-none">
-          <p class="text-[10px] text-slate-400 mt-1">Paste link to the full official Academic Calendar poster PDF.</p>
+          <p class="text-[10px] text-slate-400 mt-1">Paste link to official Academic Calendar poster PDF.</p>
         </div>
 
         <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs rounded-xl shadow-md transition">
@@ -740,7 +771,7 @@
     </div>
   </div>
 
-  <!-- DEDICATED ROSTER SIDE PANEL / DRAWER -->
+  <!-- ROSTER DRAWER -->
   <div id="rosterLogsDrawerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-end">
     <div class="bg-white w-full max-w-xl h-full shadow-2xl flex flex-col border-l border-slate-200">
       
@@ -790,7 +821,6 @@
     </div>
   </div>
 
-  <!-- CREATE NEW SHOUTOUT MODAL -->
   <div id="newShoutoutModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -800,7 +830,7 @@
 
       <form id="shoutoutForm" onsubmit="saveShoutout(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">Select Student to Shoutout</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Select Student</label>
           <select id="inp_shoutout_student" required class="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
         </div>
 
@@ -831,7 +861,6 @@
     </div>
   </div>
 
-  <!-- CHOOSE ACCOUNT MODAL -->
   <div id="chooseAccountModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -843,25 +872,6 @@
       </div>
 
       <p class="text-xs text-slate-500">Choose your profile to enter the portal:</p>
-      <!-- Google Login Option inside Modal -->
-<button onclick="loginWithGoogle()" class="w-full flex items-center justify-between p-3.5 mb-3 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-900 transition-all text-left group">
-  <div class="flex items-center gap-3">
-    <div class="w-9 h-9 rounded-xl bg-white border border-purple-200 flex items-center justify-center text-purple-600 shadow-sm group-hover:scale-105 transition-transform">
-      <i class="fab fa-google text-base text-red-500"></i>
-    </div>
-    <div>
-      <div class="text-sm font-bold text-slate-800">Sign in with Google Workspace</div>
-      <div class="text-[11px] text-slate-500">Gunakan akun email @millennia21.id</div>
-    </div>
-  </div>
-  <i class="fa-solid fa-chevron-right text-xs text-purple-400 group-hover:translate-x-1 transition-transform"></i>
-</button>
-
-<div class="flex items-center my-3 text-xs text-slate-400">
-  <div class="flex-1 border-t border-slate-200"></div>
-  <span class="px-3 font-medium">atau pilih profil manual</span>
-  <div class="flex-1 border-t border-slate-200"></div>
-</div>
       <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1">
         <button onclick="selectTeacherFromList('Ms. Mahrukh (Director)')" class="w-full p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-left flex items-center justify-between transition group">
           <div><p class="font-extrabold text-indigo-900 text-xs flex items-center"><i class="fa-solid fa-crown text-amber-500 mr-1.5"></i>Ms. Mahrukh (Director)</p><p class="text-[10px] text-indigo-700">Executive Read-Only Overview</p></div>
@@ -881,7 +891,6 @@
     </div>
   </div>
 
-  <!-- PASSCODE PIN MODAL -->
   <div id="passcodeModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4">
       <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-2xl mx-auto flex items-center justify-center text-xl font-bold">🔒</div>
@@ -909,7 +918,6 @@
     </div>
   </div>
 
-  <!-- EMOTIONAL CHECK-IN MODAL -->
   <div id="emotionCheckinModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border border-slate-100 space-y-4">
       <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl mx-auto flex items-center justify-center text-xl font-bold">💖</div>
@@ -929,7 +937,6 @@
     </div>
   </div>
 
-  <!-- MONTHLY ATTENDANCE RECAP MODAL -->
   <div id="monthlyRecapModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 flex flex-col p-5 sm:p-6 space-y-6">
       <div class="flex items-center justify-between border-b border-slate-100 pb-4">
@@ -962,7 +969,6 @@
     </div>
   </div>
 
-  <!-- DAILY ASSESSMENT MODAL -->
   <div id="assessmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-3 sm:p-4">
     <div class="bg-white rounded-3xl max-w-5xl w-full max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 flex flex-col">
       
@@ -1066,12 +1072,12 @@
 
             <div>
               <label class="block text-xs font-bold text-amber-600 mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Student's Gaps</label>
-              <textarea id="inp_gaps" rows="2" placeholder="Identify specific gaps or support needed..." class="w-full text-xs p-2.5 rounded-xl border border-amber-200 bg-amber-50/30 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+              <textarea id="inp_gaps" rows="2" placeholder="Identify specific gaps..." class="w-full text-xs p-2.5 rounded-xl border border-amber-200 bg-amber-50/30 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
             </div>
 
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
               <label class="block text-xs font-bold text-slate-700"><i class="fa-solid fa-link text-brand-600 mr-1"></i> Evidence: Google Drive Link OR Photo File</label>
-              <input type="url" id="inp_evidence_url" placeholder="Paste Google Drive / Photo Hyperlink URL here..." class="w-full text-xs p-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500">
+              <input type="url" id="inp_evidence_url" placeholder="Paste Google Drive URL..." class="w-full text-xs p-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500">
               <div class="text-[10px] text-slate-400 font-bold text-center">--- OR ATTACH FILE ---</div>
               <input type="file" id="inp_evidence_file" accept="image/*" onchange="previewUploadedFile(event)" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-100 file:text-brand-700 hover:file:bg-brand-200 cursor-pointer">
               <div id="evidencePreviewBox" class="hidden mt-2 relative">
@@ -1116,15 +1122,14 @@
               <h4 class="font-extrabold text-purple-900 text-xs"><i class="fa-solid fa-robot text-purple-600 mr-1.5"></i> Automated AI Progress Synthesis</h4>
               <button onclick="generateMonthlyAIFeedback()" class="px-2.5 py-1 rounded-lg bg-purple-600 text-white font-extrabold text-[10px] hover:bg-purple-700 transition">Generate Feedback</button>
             </div>
-            <p id="aiFeedbackNarrative" class="text-xs text-slate-700 font-medium italic leading-relaxed">Click 'Generate Feedback' to automatically synthesize scores.</p>
+            <p id="aiFeedbackNarrative" class="text-xs text-slate-700 font-medium italic leading-relaxed">Click 'Generate Feedback' to synthesize scores.</p>
           </div>
 
-          <!-- RINGKAS STATUS LOGS -->
           <div class="space-y-2.5">
             <div class="flex items-center justify-between">
               <div>
                 <h4 class="font-extrabold text-slate-800 text-xs"><i class="fa-solid fa-list-check mr-1.5 text-brand-600"></i> Daily Status Summary Logs</h4>
-                <p class="text-[10px] text-slate-400">Quick status check. Full evidence photo/details are in the side panel.</p>
+                <p class="text-[10px] text-slate-400">Quick status check.</p>
               </div>
               <button onclick="closeModal(); switchTab('roster'); openRosterStudentLogs(selectedStudentId);" class="text-[10px] bg-purple-100 hover:bg-purple-200 text-purple-800 font-extrabold px-2.5 py-1 rounded-lg transition flex items-center space-x-1">
                 <i class="fa-solid fa-folder-open text-xs"></i>
@@ -1141,14 +1146,13 @@
     </div>
   </div>
 
-  <!-- PRINTABLE PARENT REPORT MODAL -->
   <div id="parentReportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
     <div class="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-100 p-6 sm:p-8 space-y-6">
       
       <div class="flex items-center justify-between border-b border-slate-100 pb-4 no-print">
         <span class="text-xs font-bold text-slate-400 uppercase">Parent Progress Report Preview</span>
         <div class="flex space-x-2">
-          <button onclick="window.print()" class="px-4 py-2 bg-brand-600 text-white font-bold text-xs rounded-xl shadow-md shadow-brand-500/30 hover:bg-brand-700 transition">
+          <button onclick="window.print()" class="px-4 py-2 bg-brand-600 text-white font-bold text-xs rounded-xl shadow-md transition">
             <i class="fa-solid fa-print mr-1.5"></i> Print / Save PDF
           </button>
           <button onclick="closeParentReportModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center">
@@ -1163,7 +1167,7 @@
             <img src="https://lh3.googleusercontent.com/d/1CWmoNniOHc0oaghEeoXrxOlz78rvKULx" alt="MWS Logo" class="w-12 h-12 object-contain">
             <div>
               <h2 class="font-extrabold text-slate-800 text-lg">Millennia World School</h2>
-              <p class="text-xs text-brand-600 font-bold uppercase tracking-wider">Early Years Comprehensive Progress Report</p>
+              <p class="text-xs text-brand-600 font-bold uppercase tracking-wider">Early Years Progress Report</p>
             </div>
           </div>
           <div class="text-right text-xs font-semibold text-slate-500">
@@ -1185,14 +1189,14 @@
         </div>
 
         <div class="border border-slate-200 p-4 rounded-2xl space-y-2">
-          <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-book-open text-brand-600 mr-1.5"></i> 2. Subject-by-Subject Developmental Progress</h4>
+          <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-book-open text-brand-600 mr-1.5"></i> 2. Subject-by-Subject Progress</h4>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
                   <th class="py-2 px-2">Subject Area</th>
-                  <th class="py-2 px-2 text-center">Recorded Evaluations</th>
-                  <th class="py-2 px-2 text-center">Average Rubric Score</th>
+                  <th class="py-2 px-2 text-center">Evaluations</th>
+                  <th class="py-2 px-2 text-center">Average Score</th>
                   <th class="py-2 px-2">Status Level</th>
                 </tr>
               </thead>
@@ -1202,7 +1206,7 @@
         </div>
 
         <div class="space-y-3">
-          <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-comment-dots text-brand-600 mr-1.5"></i> 3. Teacher Observations & Focus Areas</h4>
+          <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-comment-dots text-brand-600 mr-1.5"></i> 3. Observations & Focus Areas</h4>
           <div id="rptObservationList" class="space-y-2 text-xs"></div>
         </div>
 
@@ -1213,7 +1217,7 @@
           </div>
           <div>
             <p class="mb-12">School Principal</p>
-            <p class="underline font-extrabold text-slate-800">Ms. Latifah, S.Pd.</p>
+            <p class="underline font-extrabold text-slate-800">Latifah Nur Restiningtyas, S.Pd.</p>
           </div>
         </div>
       </div>
@@ -1221,31 +1225,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
   <script>
-    const broadcastChannel = new BroadcastChannel('mws_portal_realtime_sync');
-
-    // INITIALIZE FIREBASE COMPAT (OPTIONAL BACKEND CLOUD CONNECTIVITY)
-   const firebaseConfig = {
-  apiKey: "AIzaSyA_lm9ZJ3JYHCfE-DZFcny16ZTCtetAWPU",
-  authDomain: "assessment-dashboard-6d944.firebaseapp.com",
-  projectId: "assessment-dashboard-6d944",
-  storageBucket: "assessment-dashboard-6d944.firebasestorage.app",
-  messagingSenderId: "972306658423",
-  appId: "1:972306658423:web:73dae87dbb647cfaf08272",
-  measurementId: "G-GZSJHEC1P0"
-};
-
-    let db = null;
-    try {
-      if (firebase.apps && !firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-      }
-    } catch (e) {
-      console.log("Firebase initialized in LocalStorage mode.");
-    }
-
     const teacherSecurity = {
       "Ms. Mahrukh (Director)": { pass: "8888", class: "ALL", role: "Director" },
       "Ms. Latifah (Principal)": { pass: "9999", class: "ALL", role: "Principal" },
@@ -1260,16 +1240,16 @@
     const initialAcademicCalendarEvents = [
       { id: 1, date: "2026-07-20", title: "1st Day of School 2026/2027 & Diagnostic Assessment", category: "activity", month: "2026-07", dayNum: "20", monthStr: "JUL", academicYear: "2026/2027" },
       { id: 2, date: "2026-07-21", title: "Diagnostic Assessment & Back to School", category: "activity", month: "2026-07", dayNum: "21", monthStr: "JUL", academicYear: "2026/2027" },
-      { id: 3, date: "2026-08-17", title: "National Independence Day Ceremony & Celebration", category: "activity", month: "2026-08", dayNum: "17", monthStr: "AUG", academicYear: "2026/2027" },
+      { id: 3, date: "2026-08-17", title: "National Independence Day Ceremony", category: "activity", month: "2026-08", dayNum: "17", monthStr: "AUG", academicYear: "2026/2027" },
       { id: 4, date: "2026-08-21", title: "Quality Time 1 Activities", category: "parent", month: "2026-08", dayNum: "21", monthStr: "AUG", academicYear: "2026/2027" },
-      { id: 5, date: "2026-09-15", title: "Global Goals Week & Climate Action Project", category: "activity", month: "2026-09", dayNum: "15", monthStr: "SEP", academicYear: "2026/2027" },
-      { id: 6, date: "2026-10-12", title: "Digital Citizenship Week & SLC Preparation", category: "parent", month: "2026-10", dayNum: "12", monthStr: "OCT", academicYear: "2026/2027" },
+      { id: 5, date: "2026-09-15", title: "Global Goals Week & Project", category: "activity", month: "2026-09", dayNum: "15", monthStr: "SEP", academicYear: "2026/2027" },
+      { id: 6, date: "2026-10-12", title: "Digital Citizenship Week & SLC Prep", category: "parent", month: "2026-10", dayNum: "12", monthStr: "OCT", academicYear: "2026/2027" },
       { id: 7, date: "2026-10-23", title: "Midterm Report & Student-Led Conference", category: "parent", month: "2026-10", dayNum: "23", monthStr: "OCT", academicYear: "2026/2027" },
       { id: 8, date: "2026-11-12", title: "National Father's Day & World Compassion Day", category: "activity", month: "2026-11", dayNum: "12", monthStr: "NOV", academicYear: "2026/2027" },
       { id: 9, date: "2026-12-14", title: "Final Assessment & Report Day", category: "parent", month: "2026-12", dayNum: "14", monthStr: "DEC", academicYear: "2026/2027" },
       { id: 10, date: "2026-12-25", title: "Christmas Day Holiday", category: "holiday", month: "2026-12", dayNum: "25", monthStr: "DEC", academicYear: "2026/2027" },
       { id: 11, date: "2027-01-04", title: "Back to School (Term 2 Starts)", category: "activity", month: "2027-01", dayNum: "04", monthStr: "JAN", academicYear: "2026/2027" },
-      { id: 12, date: "2027-02-10", title: "Lunar New Year & Isra'Miraj Holiday", category: "holiday", month: "2027-02", dayNum: "10", monthStr: "FEB", academicYear: "2026/2027" },
+      { id: 12, date: "2027-02-10", title: "Lunar New Year Holiday", category: "holiday", month: "2027-02", dayNum: "10", monthStr: "FEB", academicYear: "2026/2027" },
       { id: 13, date: "2027-03-22", title: "Nyepi & Eid Al-Fitr Holidays", category: "holiday", month: "2027-03", dayNum: "22", monthStr: "MAR", academicYear: "2026/2027" },
       { id: 14, date: "2027-04-21", title: "Kartini Day & Earth Day Celebration", category: "activity", month: "2027-04", dayNum: "21", monthStr: "APR", academicYear: "2026/2027" },
       { id: 15, date: "2027-05-01", title: "Labor Day & Vesak Day Holidays", category: "holiday", month: "2027-05", dayNum: "01", monthStr: "MAY", academicYear: "2026/2027" },
@@ -1392,18 +1372,73 @@
     let uploadedShoutoutBase64 = '';
     let currentAttendanceState = {};
 
-    const studentsGrid = document.getElementById('studentsGrid');
-    const welcomeGreeting = document.getElementById('welcomeGreeting');
-    const homeroomBadge = document.getElementById('homeroomBadge');
-    const termSelect = document.getElementById('termSelect');
-    const yearSelect = document.getElementById('yearSelect');
-    const activeTermBadge = document.getElementById('activeTermBadge');
+    // FIRESTORE LIVE SYNC SAFEGUARD
+    try {
+      if (typeof db !== 'undefined' && db) {
+        db.collection("mws_school_data").doc("main_store")
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              if (data.students) students = data.students;
+              if (data.dailyLogs) dailyLogs = data.dailyLogs;
+              if (data.attendanceDB) attendanceDB = data.attendanceDB;
+              if (data.shoutoutsDB) shoutoutsDB = data.shoutoutsDB;
+              if (data.dailySubmissionsDB) dailySubmissionsDB = data.dailySubmissionsDB;
+              if (data.teacherEmotionsDB) teacherEmotionsDB = data.teacherEmotionsDB;
+              if (data.academicCalendarEvents) academicCalendarEvents = data.academicCalendarEvents;
+              if (data.calendarPdfUrl !== undefined) calendarPdfUrl = data.calendarPdfUrl;
+              if (data.notificationsDB) notificationsDB = data.notificationsDB;
+
+              localStorage.setItem('mws_students_db', JSON.stringify(students));
+              localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs));
+              localStorage.setItem('mws_attendance_db', JSON.stringify(attendanceDB));
+              localStorage.setItem('mws_shoutouts_db', JSON.stringify(shoutoutsDB));
+              localStorage.setItem('mws_daily_submissions', JSON.stringify(dailySubmissionsDB));
+              localStorage.setItem('mws_teacher_emotions', JSON.stringify(teacherEmotionsDB));
+              localStorage.setItem('mws_calendar_events', JSON.stringify(academicCalendarEvents));
+              localStorage.setItem('mws_calendar_pdf_url', calendarPdfUrl);
+              localStorage.setItem('mws_notifications_db', JSON.stringify(notificationsDB));
+
+              const cloudBadge = document.getElementById('cloudStatusBadge');
+              if (cloudBadge) cloudBadge.classList.remove('hidden');
+
+              reloadLocalStorageState();
+            }
+          }, (error) => {
+            console.error("Firestore cloud sync error:", error);
+          });
+      }
+    } catch(e) { console.warn("Firestore not connected."); }
+
+    function saveToCloud() {
+      try {
+        if (typeof db !== 'undefined' && db) {
+          db.collection("mws_school_data").doc("main_store").set({
+            students: students,
+            dailyLogs: dailyLogs,
+            attendanceDB: attendanceDB,
+            shoutoutsDB: shoutoutsDB,
+            dailySubmissionsDB: dailySubmissionsDB,
+            teacherEmotionsDB: teacherEmotionsDB,
+            academicCalendarEvents: academicCalendarEvents,
+            calendarPdfUrl: calendarPdfUrl,
+            notificationsDB: notificationsDB,
+            lastUpdatedBy: activeTeacher || 'System',
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(err => console.error("Cloud save error:", err));
+        }
+      } catch(e){}
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       const todayStr = new Date().toISOString().split('T')[0];
-      document.getElementById('inp_date').value = todayStr;
-      document.getElementById('att_date_picker').value = todayStr;
-      document.getElementById('recap_month_picker').value = todayStr.substring(0, 7);
+      const inpDate = document.getElementById('inp_date');
+      const attPicker = document.getElementById('att_date_picker');
+      const recapPicker = document.getElementById('recap_month_picker');
+
+      if (inpDate) inpDate.value = todayStr;
+      if (attPicker) attPicker.value = todayStr;
+      if (recapPicker) recapPicker.value = todayStr.substring(0, 7);
 
       if (activeTeacher) {
         applyTeacherProfile(activeTeacher);
@@ -1416,6 +1451,7 @@
       renderNotifications();
       renderAcademicCalendar();
       updateCalendarPdfButton();
+      updateAssessmentSubmitStatusBadge();
 
       setInterval(checkDayChangeAutoReset, 30000);
       document.addEventListener('visibilitychange', () => {
@@ -1432,20 +1468,21 @@
         }
       });
 
-      broadcastChannel.onmessage = (event) => {
-        if (event.data && event.data.type === 'SYNC_DATA') reloadLocalStorageState();
-      };
+      const searchInp = document.getElementById('searchInput');
+      if (searchInp) {
+        searchInp.addEventListener('input', (e) => {
+          searchQuery = e.target.value.toLowerCase();
+          renderStudents();
+        });
+      }
 
-      window.addEventListener('storage', () => reloadLocalStorageState());
-
-      document.getElementById('searchInput').addEventListener('input', (e) => {
-        searchQuery = e.target.value.toLowerCase();
-        renderStudents();
-      });
-      document.getElementById('gradeFilter').addEventListener('change', (e) => {
-        activeGrade = e.target.value;
-        renderStudents();
-      });
+      const gradeFilt = document.getElementById('gradeFilter');
+      if (gradeFilt) {
+        gradeFilt.addEventListener('change', (e) => {
+          activeGrade = e.target.value;
+          renderStudents();
+        });
+      }
     });
 
     function getActiveYearStudents() {
@@ -1459,9 +1496,14 @@
     }
 
     function changeAcademicYear() {
-      currentAcademicYear = yearSelect.value;
-      document.getElementById('landingYearTag').textContent = `Academic Year ${currentAcademicYear}`;
-      document.getElementById('rptYearTag').textContent = `Academic Year ${currentAcademicYear}`;
+      const yearSelect = document.getElementById('yearSelect');
+      if (yearSelect) currentAcademicYear = yearSelect.value;
+
+      const landingTag = document.getElementById('landingYearTag');
+      const rptTag = document.getElementById('rptYearTag');
+
+      if (landingTag) landingTag.textContent = `Academic Year ${currentAcademicYear}`;
+      if (rptTag) rptTag.textContent = `Academic Year ${currentAcademicYear}`;
       
       const availableClasses = getActiveYearClassList();
       activeClass = availableClasses[0] || 'ALL';
@@ -1473,6 +1515,7 @@
       renderRosterTable();
       renderAnalyticsChart();
       renderAcademicCalendar();
+      updateAssessmentSubmitStatusBadge();
     }
 
     function renderClassFilterTabs() {
@@ -1486,13 +1529,12 @@
         const btn = document.createElement('button');
         btn.onclick = () => filterClass(c);
         btn.id = `btnClass-${c}`;
-        btn.dataset.class = c;
         btn.textContent = c === 'ALL' ? 'All' : c;
         
         if (c === activeClass) {
-          btn.className = "class-tab-btn px-3 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-md transition";
+          btn.className = "px-3 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-md transition";
         } else {
-          btn.className = "class-tab-btn px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
+          btn.className = "px-3 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
         }
 
         if (activeRole === 'Teacher' && teacherSecurity[activeTeacher]) {
@@ -1538,7 +1580,6 @@
       });
     }
 
-    /* --- ROLLOVER & PROMOTION TO NEXT ACADEMIC YEAR --- */
     function promoteAcademicYear() {
       if (activeRole === 'Director') {
         showToast("👑 Read-Only Mode: Kenaikan kelas hanya oleh Principal/Guru.", true);
@@ -1554,41 +1595,25 @@
       }
 
       const nextYear = yearOptions[currentIdx + 1];
-
       const currentStudents = getActiveYearStudents().filter(s => s.status !== 'Graduated');
       if (currentStudents.length === 0) {
         showToast(`Tidak ada siswa aktif ditemukan di tahun ajaran ${currentAcademicYear}!`, true);
         return;
       }
 
-      const existingNextYearStudents = students.filter(s => s.academicYear === nextYear);
-      if (existingNextYearStudents.length > 0) {
-        if (!confirm(`Tahun ajaran ${nextYear} sudah memiliki data siswa. Apakah Anda ingin memperbarui/menimpa kenaikan kelas lagi?`)) {
-          return;
-        }
-        students = students.filter(s => s.academicYear !== nextYear);
-      }
+      if (!confirm(`Promosikan semua siswa ke Academic Year ${nextYear}?`)) return;
 
       let maxId = students.length > 0 ? Math.max(...students.map(s => s.id)) : 0;
-      let promotedCount = 0;
-      let graduatedCount = 0;
+      let promotedCount = 0, graduatedCount = 0;
 
       currentStudents.forEach(s => {
         maxId++;
         let newLevel = s.level;
         let newStatus = 'Active';
 
-        if (s.level === 'K2') {
-          newLevel = 'Graduated';
-          newStatus = 'Graduated';
-          graduatedCount++;
-        } else if (s.level === 'K1') {
-          newLevel = 'K2';
-          promotedCount++;
-        } else if (s.level === 'Pre K') {
-          newLevel = 'K1';
-          promotedCount++;
-        }
+        if (s.level === 'K2') { newLevel = 'Graduated'; newStatus = 'Graduated'; graduatedCount++; }
+        else if (s.level === 'K1') { newLevel = 'K2'; promotedCount++; }
+        else if (s.level === 'Pre K') { newLevel = 'K1'; promotedCount++; }
 
         students.push({
           id: maxId,
@@ -1603,11 +1628,11 @@
 
       safeSaveLocalStorage('mws_students_db', students);
       currentAcademicYear = nextYear;
-      yearSelect.value = nextYear;
+      const yearSel = document.getElementById('yearSelect');
+      if (yearSel) yearSel.value = nextYear;
 
-      pushRealtimeUpdate(`🚀 Promosi Kenaikan Kelas Berhasil! Transisi ke Academic Year ${nextYear}.`);
-      showToast(`✨ Successful Rollover to ${nextYear}! (${promotedCount} Promoted, ${graduatedCount} Graduated)`);
-
+      pushRealtimeUpdate(`Promosi Kenaikan Kelas Berhasil ke Academic Year ${nextYear}!`);
+      showToast(`✨ Successful Rollover to ${nextYear}!`);
       changeAcademicYear();
     }
 
@@ -1615,11 +1640,14 @@
       const currentDateStr = new Date().toISOString().split('T')[0];
       if (currentDateStr !== lastSystemDateStr) {
         lastSystemDateStr = currentDateStr;
-        document.getElementById('inp_date').value = currentDateStr;
-        document.getElementById('att_date_picker').value = currentDateStr;
+        const inpDate = document.getElementById('inp_date');
+        const attPicker = document.getElementById('att_date_picker');
+        if (inpDate) inpDate.value = currentDateStr;
+        if (attPicker) attPicker.value = currentDateStr;
 
         renderSubmissionStatusBoard();
         renderTeacherEmotionRecap();
+        updateAssessmentSubmitStatusBadge();
         if (activeTeacher) showToast(`🌙 New day (${currentDateStr})! Status board reset.`, false);
       }
     }
@@ -1629,35 +1657,25 @@
       const toastMsg = document.getElementById('toastMessage');
       const toastIcon = document.getElementById('toastIcon');
 
-      toastMsg.textContent = msg;
-      toastIcon.className = isError ? "fa-solid fa-circle-xmark text-rose-400 text-lg" : "fa-solid fa-circle-check text-emerald-400 text-lg";
+      if (toast && toastMsg && toastIcon) {
+        toastMsg.textContent = msg;
+        toastIcon.className = isError ? "fa-solid fa-circle-xmark text-rose-400 text-lg" : "fa-solid fa-circle-check text-emerald-400 text-lg";
 
-      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-      setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-      }, 3000);
+        toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        }, 3000);
+      }
     }
 
     function safeSaveLocalStorage(key, dataArray) {
       try {
         localStorage.setItem(key, typeof dataArray === 'string' ? dataArray : JSON.stringify(dataArray));
+        saveToCloud();
         return true;
       } catch (e) {
-        if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-          if (Array.isArray(dailyLogs)) {
-            dailyLogs.forEach(l => { if (l.evidence && l.evidence.startsWith('data:image')) l.evidence = ''; });
-            try { localStorage.setItem('mws_daily_logs', JSON.stringify(dailyLogs)); } catch(r){}
-          }
-          try {
-            localStorage.setItem(key, typeof dataArray === 'string' ? dataArray : JSON.stringify(dataArray));
-            showToast("⚠️ Memory optimized!", false);
-            return true;
-          } catch (retryErr) {
-            showToast("⚠️ Local storage full! Saved text content.", false);
-            return false;
-          }
-        }
-        return false;
+        saveToCloud();
+        return true;
       }
     }
 
@@ -1671,8 +1689,7 @@
         img.onload = function() {
           try {
             const canvas = document.createElement('canvas');
-            let width = img.width || 320;
-            let height = img.height || 240;
+            let width = img.width || 320, height = img.height || 240;
             if (width > maxWidth) {
               height = Math.round((height * maxWidth) / width);
               width = maxWidth;
@@ -1693,19 +1710,6 @@
     }
 
     function reloadLocalStorageState() {
-      let savedStudentsData = localStorage.getItem('mws_students_db');
-      if (savedStudentsData) students = JSON.parse(savedStudentsData);
-
-      academicCalendarEvents = JSON.parse(localStorage.getItem('mws_calendar_events')) || initialAcademicCalendarEvents;
-      calendarPdfUrl = localStorage.getItem('mws_calendar_pdf_url') || '';
-
-      dailyLogs = JSON.parse(localStorage.getItem('mws_daily_logs')) || [];
-      attendanceDB = JSON.parse(localStorage.getItem('mws_attendance_db')) || {};
-      dailySubmissionsDB = JSON.parse(localStorage.getItem('mws_daily_submissions')) || {};
-      teacherEmotionsDB = JSON.parse(localStorage.getItem('mws_teacher_emotions')) || [];
-      shoutoutsDB = JSON.parse(localStorage.getItem('mws_shoutouts_db')) || [];
-      notificationsDB = JSON.parse(localStorage.getItem('mws_notifications_db')) || [];
-
       renderClassFilterTabs();
       renderAttendanceClassFilterTabs();
       renderStudents();
@@ -1716,9 +1720,13 @@
       renderShoutouts();
       renderAcademicCalendar();
       updateCalendarPdfButton();
-      updateSubmitButtonUI();
-      if (!document.getElementById('view-attendance-content').classList.contains('hidden')) loadAttendanceForSelectedDate();
-      if (!document.getElementById('rosterLogsDrawerModal').classList.contains('hidden') && selectedRosterDrawerStudentId) renderRosterDrawerLogs();
+      updateAssessmentSubmitStatusBadge();
+      
+      const attView = document.getElementById('view-attendance-content');
+      if (attView && !attView.classList.contains('hidden')) loadAttendanceForSelectedDate();
+      
+      const rosterDrawer = document.getElementById('rosterLogsDrawerModal');
+      if (rosterDrawer && !rosterDrawer.classList.contains('hidden') && selectedRosterDrawerStudentId) renderRosterDrawerLogs();
     }
 
     function pushRealtimeUpdate(notificationMsg) {
@@ -1731,25 +1739,30 @@
           });
           safeSaveLocalStorage('mws_notifications_db', notificationsDB);
         }
-        if (window.broadcastChannel) broadcastChannel.postMessage({ type: 'SYNC_DATA' });
         renderNotifications();
       } catch(err){}
     }
 
     function toggleNotificationMenu(e) {
       if(e) e.stopPropagation();
-      document.getElementById('notifDropdown').classList.toggle('hidden');
+      const dropdown = document.getElementById('notifDropdown');
+      if (dropdown) dropdown.classList.toggle('hidden');
     }
 
-    function clearNotifications() {
+    function clearNotifications(e) {
+      if(e) e.stopPropagation();
       notificationsDB = [];
       safeSaveLocalStorage('mws_notifications_db', notificationsDB);
       renderNotifications();
+      const dropdown = document.getElementById('notifDropdown');
+      if (dropdown) dropdown.classList.add('hidden');
+      showToast("All notifications cleared!");
     }
 
     function renderNotifications() {
       const list = document.getElementById('notifList');
       const badge = document.getElementById('notifBadge');
+      if (!list || !badge) return;
 
       if (notificationsDB.length > 0) {
         badge.textContent = notificationsDB.length;
@@ -1776,31 +1789,52 @@
       const textElements = document.querySelectorAll('.sidebar-text');
       isSidebarCollapsed = !isSidebarCollapsed;
 
-      if (isSidebarCollapsed) {
-        sidebar.classList.remove('w-60'); sidebar.classList.add('w-16');
-        icon.className = "fa-solid fa-chevron-right text-[10px]";
-        textElements.forEach(el => el.classList.add('hidden'));
-      } else {
-        sidebar.classList.remove('w-16'); sidebar.classList.add('w-60');
-        icon.className = "fa-solid fa-chevron-left text-[10px]";
-        textElements.forEach(el => el.classList.remove('hidden'));
+      if (sidebar && icon) {
+        if (isSidebarCollapsed) {
+          sidebar.classList.remove('w-60'); sidebar.classList.add('w-16');
+          icon.className = "fa-solid fa-chevron-right text-[11px]";
+          textElements.forEach(el => el.classList.add('hidden'));
+        } else {
+          sidebar.classList.remove('w-16'); sidebar.classList.add('w-60');
+          icon.className = "fa-solid fa-chevron-left text-[11px]";
+          textElements.forEach(el => el.classList.remove('hidden'));
+        }
       }
     }
 
-    function toggleMobileMenu() { document.getElementById('mobileDrawer').classList.toggle('hidden'); }
-    function openChooseAccountModal() { document.getElementById('chooseAccountModal').classList.remove('hidden'); }
-    function closeChooseAccountModal() { document.getElementById('chooseAccountModal').classList.add('hidden'); }
+    function toggleMobileMenu() { 
+      const drawer = document.getElementById('mobileDrawer');
+      if (drawer) drawer.classList.toggle('hidden'); 
+    }
+    
+    function openChooseAccountModal() { 
+      const modal = document.getElementById('chooseAccountModal');
+      if (modal) modal.classList.remove('hidden'); 
+    }
+    
+    function closeChooseAccountModal() { 
+      const modal = document.getElementById('chooseAccountModal');
+      if (modal) modal.classList.add('hidden'); 
+    }
 
     function selectTeacherFromList(tName) {
       selectedTeacherCandidate = tName;
       closeChooseAccountModal();
-      document.getElementById('username_hidden').value = tName;
-      document.getElementById('pinModalTeacherName').textContent = `Enter PIN for ${tName}`;
+      
+      const userHidden = document.getElementById('username_hidden');
+      const pinTitle = document.getElementById('pinModalTeacherName');
+      const passcodeInp = document.getElementById('inp_passcode');
+      const errBox = document.getElementById('passcodeError');
+      const modal = document.getElementById('passcodeModal');
+
+      if (userHidden) userHidden.value = tName;
+      if (pinTitle) pinTitle.textContent = `Enter PIN for ${tName}`;
+      
       const savedPinForTeacher = localStorage.getItem(`mws_pin_${tName}`);
-      document.getElementById('inp_passcode').value = savedPinForTeacher || '';
-      document.getElementById('passcodeError').classList.add('hidden');
-      document.getElementById('passcodeModal').classList.remove('hidden');
-      document.getElementById('inp_passcode').focus();
+      if (passcodeInp) passcodeInp.value = savedPinForTeacher || '';
+      if (errBox) errBox.classList.add('hidden');
+      if (modal) modal.classList.remove('hidden');
+      if (passcodeInp) passcodeInp.focus();
     }
 
     function verifyPasscode(e) {
@@ -1828,7 +1862,8 @@
         const alreadyCheckedInToday = teacherEmotionsDB.some(item => item.teacher === activeTeacher && item.date === todayStr);
 
         if (!alreadyCheckedInToday) {
-          document.getElementById('emotionCheckinGreeting').textContent = `Hi ${activeTeacher}! How are you feeling today?`;
+          const greet = document.getElementById('emotionCheckinGreeting');
+          if (greet) greet.textContent = `Hi ${activeTeacher}! How are you feeling today?`;
           document.getElementById('emotionCheckinModal').classList.remove('hidden');
         } else {
           switchTab('dashboard');
@@ -1852,12 +1887,14 @@
       safeSaveLocalStorage('mws_teacher_emotions', teacherEmotionsDB);
       pushRealtimeUpdate(`${activeTeacher} checked in emotion: ${emotion}`);
       renderTeacherEmotionRecap();
-      switchTab('dashboard');
+      showToast(`Emotional Check-in logged: ${emotion}`);
+      switchTab('landing'); // Auto Redirect back to Home Portal so teacher sees live grid!
     }
 
     function renderTeacherEmotionRecap() {
       const todayStr = new Date().toISOString().split('T')[0];
       const grid = document.getElementById('teacherEmotionRecapGrid');
+      if (!grid) return;
       grid.innerHTML = '';
 
       const todaysEmotions = teacherEmotionsDB.filter(e => e.date === todayStr);
@@ -1868,7 +1905,7 @@
 
       todaysEmotions.forEach(e => {
         const card = document.createElement('div');
-        card.className = "p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center space-x-2.5";
+        card.className = "p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center space-x-2.5 shadow-sm";
         card.innerHTML = `<div class="text-2xl">${e.emotion.split(' ')[0]}</div><div><h5 class="font-extrabold text-xs text-slate-800 leading-tight">${e.teacher}</h5><p class="text-[10px] text-slate-400 font-semibold">${e.emotion.split(' ')[1] || ''} • ${e.time}</p></div>`;
         grid.appendChild(card);
       });
@@ -1876,9 +1913,16 @@
 
     function applyTeacherProfile(tName) {
       const sec = teacherSecurity[tName];
-      document.getElementById('activeTeacherLabel').textContent = tName;
-      document.getElementById('activeTeacherLabel').className = "text-xs font-bold text-brand-700";
-      welcomeGreeting.textContent = `Hi ${tName}! Glad to see you! 👋`;
+      const teacherLabel = document.getElementById('activeTeacherLabel');
+      const welcomeGreet = document.getElementById('welcomeGreeting');
+      const hrBadge = document.getElementById('homeroomBadge');
+      const roleIcon = document.getElementById('accountRoleIcon');
+
+      if (teacherLabel) {
+        teacherLabel.textContent = tName;
+        teacherLabel.className = "text-xs font-bold text-brand-700";
+      }
+      if (welcomeGreet) welcomeGreet.textContent = `Hi ${tName}! Glad to see you! 👋`;
 
       ['dashboard', 'shoutout', 'attendance', 'roster', 'analytics'].forEach(id => {
         const lockIcon = document.getElementById(`lock-icon-${id}`);
@@ -1887,25 +1931,31 @@
         if (navBtn) navBtn.classList.remove('text-slate-400');
       });
 
-      const btnSubAss = document.getElementById('btnSubmitAssessmentReport');
-      const btnSubAtt = document.getElementById('btnSubmitAttendanceReport');
+      const assBox = document.getElementById('assessmentActionButtonsContainer');
+      const attBox = document.getElementById('attendanceActionButtonsContainer');
 
       if (sec.role === 'Director' || sec.role === 'Principal') {
-        homeroomBadge.textContent = sec.role === 'Director' ? "👑 Director Read-Only View (Ms. Mahrukh)" : "👑 Principal Access (Ms. Latifah)";
-        homeroomBadge.className = sec.role === 'Director' ? "text-xs font-bold bg-indigo-200 text-indigo-900 px-3 py-1 rounded-full" : "text-xs font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full";
-        document.getElementById('accountRoleIcon').className = "fa-solid fa-crown text-amber-500";
-        if (btnSubAss) btnSubAss.classList.add('hidden');
-        if (btnSubAtt) btnSubAtt.classList.add('hidden');
+        if (hrBadge) {
+          hrBadge.textContent = sec.role === 'Director' ? "👑 Director Read-Only View" : "👑 Principal Access (Ms. Latifah)";
+          hrBadge.className = sec.role === 'Director' ? "text-xs font-bold bg-indigo-200 text-indigo-900 px-3 py-1 rounded-full" : "text-xs font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full";
+        }
+        if (roleIcon) roleIcon.className = "fa-solid fa-crown text-amber-500";
+        if (assBox) assBox.classList.add('hidden');
+        if (attBox) attBox.classList.add('hidden');
         activeClass = 'ALL';
         attendanceClass = getActiveYearClassList()[0] || 'ALL';
-        document.getElementById('teacherAssignToggleContainer').classList.add('hidden');
+        const toggleBox = document.getElementById('teacherAssignToggleContainer');
+        if (toggleBox) toggleBox.classList.add('hidden');
       } else {
-        homeroomBadge.textContent = `Homeroom: ${sec.class} (${tName}'s Students)`;
-        homeroomBadge.className = "text-xs font-bold bg-purple-200 text-purple-900 px-3 py-1 rounded-full";
-        document.getElementById('accountRoleIcon').className = "fa-solid fa-user-shield text-brand-600";
-        if (btnSubAss) btnSubAss.classList.remove('hidden');
-        if (btnSubAtt) btnSubAtt.classList.remove('hidden');
-        document.getElementById('teacherAssignToggleContainer').classList.remove('hidden');
+        if (hrBadge) {
+          hrBadge.textContent = `Homeroom: ${sec.class} (${tName}'s Students)`;
+          hrBadge.className = "text-xs font-bold bg-purple-200 text-purple-900 px-3 py-1 rounded-full";
+        }
+        if (roleIcon) roleIcon.className = "fa-solid fa-user-shield text-brand-600";
+        if (assBox) assBox.classList.remove('hidden');
+        if (attBox) attBox.classList.remove('hidden');
+        const toggleBox = document.getElementById('teacherAssignToggleContainer');
+        if (toggleBox) toggleBox.classList.remove('hidden');
         activeClass = sec.class;
         attendanceClass = sec.class;
       }
@@ -1913,104 +1963,135 @@
       renderClassFilterTabs();
       renderAttendanceClassFilterTabs();
       renderStudents();
-      updateSubmitButtonUI();
-      if (!document.getElementById('view-attendance-content').classList.contains('hidden')) loadAttendanceForSelectedDate();
+      updateAssessmentSubmitStatusBadge();
     }
 
     function setTeacherStudentFilter(isMy11) {
       filterMy11Only = isMy11;
       const btn11 = document.getElementById('btnFilterMy11');
       const btn22 = document.getElementById('btnFilterAll22');
-      if (isMy11) {
-        btn11.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-sm transition";
-        btn22.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition";
-      } else {
-        btn22.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-sm transition";
-        btn11.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition";
+      if (btn11 && btn22) {
+        if (isMy11) {
+          btn11.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-sm transition";
+          btn22.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition";
+        } else {
+          btn22.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 text-white shadow-sm transition";
+          btn11.className = "px-2.5 py-1 rounded-lg text-[11px] font-bold text-slate-600 hover:bg-slate-200 transition";
+        }
       }
       renderStudents();
     }
 
     function changeTerm() {
-      currentTerm = termSelect.value;
-      activeTermBadge.textContent = `${currentTerm} Assessment`;
+      const termSel = document.getElementById('termSelect');
+      const termBadge = document.getElementById('activeTermBadge');
+      if (termSel) currentTerm = termSel.value;
+      if (termBadge) termBadge.textContent = `${currentTerm} Assessment`;
       renderStudents();
     }
 
-    /* --- DYNAMIC TOGGLE SUBMIT & UNSUBMIT TODAY'S REPORT --- */
-    function toggleSubmitTodayClassReport(type) {
-      if (activeRole === 'Director' || activeRole === 'Principal') {
-        showToast("👑 Executive Mode: Submission is for Homeroom Teachers.", true);
+    /* --- LIVE ASSESSMENT SUBMIT BADGE UPDATE --- */
+    function updateAssessmentSubmitStatusBadge() {
+      const badge = document.getElementById('assessmentSubmitStatusBadge');
+      if (!badge) return;
+      const today = new Date().toISOString().split('T')[0];
+
+      let targetClass = activeClass;
+      if ((!targetClass || targetClass === 'ALL') && teacherSecurity[activeTeacher] && teacherSecurity[activeTeacher].class !== 'ALL') {
+        targetClass = teacherSecurity[activeTeacher].class;
+      }
+
+      if (!targetClass || targetClass === 'ALL') {
+        badge.className = "text-[11px] font-bold bg-slate-100 text-slate-700 px-3 py-1 rounded-full border border-slate-200";
+        badge.innerHTML = `<i class="fa-solid fa-layer-group mr-1.5 text-slate-400"></i>Scope: All Classes`;
         return;
       }
+
+      const sub = dailySubmissionsDB[today] && dailySubmissionsDB[today][targetClass] && dailySubmissionsDB[today][targetClass]['Assessment'];
+
+      if (sub) {
+        badge.className = "text-[11px] font-bold bg-emerald-400 text-slate-900 px-3 py-1 rounded-full shadow-sm";
+        badge.innerHTML = `<i class="fa-solid fa-circle-check mr-1.5 text-slate-900"></i>Submitted at ${sub.time} (${sub.submittedBy})`;
+      } else {
+        badge.className = "text-[11px] font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full shadow-sm";
+        badge.innerHTML = `<i class="fa-solid fa-clock mr-1.5 text-slate-900"></i>Class Report Pending`;
+      }
+    }
+
+    /* --- ACTION SUBMIT --- */
+    function submitClassReportAction(type) {
+      if (activeRole === 'Director' || activeRole === 'Principal') {
+        showToast("👑 Executive Mode: Submission is only for Homeroom Teachers.", true);
+        return;
+      }
+      
+      let targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+      
+      if ((!targetClass || targetClass === 'ALL') && teacherSecurity[activeTeacher] && teacherSecurity[activeTeacher].class !== 'ALL') {
+        targetClass = teacherSecurity[activeTeacher].class;
+      }
+
+      if (!targetClass || targetClass === 'ALL') {
+        showToast("Pilih kelas spesifik terlebih dahulu sebelum Submit!", true);
+        return;
+      }
+
       const today = new Date().toISOString().split('T')[0];
       const timeNow = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       if (!dailySubmissionsDB[today]) dailySubmissionsDB[today] = {};
-      if (!dailySubmissionsDB[today][activeClass]) dailySubmissionsDB[today][activeClass] = {};
+      if (!dailySubmissionsDB[today][targetClass]) dailySubmissionsDB[today][targetClass] = {};
 
-      const currentSub = dailySubmissionsDB[today][activeClass][type];
+      dailySubmissionsDB[today][targetClass][type] = { submittedBy: activeTeacher, time: timeNow };
+      safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
 
-      if (currentSub) {
-        // UNSUBMIT LOGIC
-        delete dailySubmissionsDB[today][activeClass][type];
-        safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
-        pushRealtimeUpdate(`↩️ ${activeTeacher} unsubmitted ${type} Report for Class ${activeClass}`);
-        showToast(`Today's ${type} Report for ${activeClass} Unsubmitted.`);
-      } else {
-        // SUBMIT LOGIC
-        dailySubmissionsDB[today][activeClass][type] = { submittedBy: activeTeacher, time: timeNow };
-        safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
-        pushRealtimeUpdate(`📩 ${activeTeacher} submitted ${type} Report for Class ${activeClass}!`);
-        showToast(`Today's ${type} Report for ${activeClass} Submitted!`);
-      }
+      pushRealtimeUpdate(`📩 ${activeTeacher} submitted ${type} Report for Class ${targetClass}!`);
+      showToast(`Today's ${type} Report for ${targetClass} Submitted!`);
 
       renderSubmissionStatusBoard();
-      updateSubmitButtonUI();
+      updateAssessmentSubmitStatusBadge();
     }
 
-    function updateSubmitButtonUI() {
+    /* --- ACTION UNSUBMIT --- */
+    function unsubmitClassReportAction(type) {
+      if (activeRole === 'Director' || activeRole === 'Principal') {
+        showToast("👑 Executive Mode: Unsubmitting is only for Homeroom Teachers.", true);
+        return;
+      }
+
+      let targetClass = type === 'Assessment' ? activeClass : attendanceClass;
+
+      if ((!targetClass || targetClass === 'ALL') && teacherSecurity[activeTeacher] && teacherSecurity[activeTeacher].class !== 'ALL') {
+        targetClass = teacherSecurity[activeTeacher].class;
+      }
+
+      if (!targetClass || targetClass === 'ALL') {
+        showToast("Pilih kelas spesifik terlebih dahulu!", true);
+        return;
+      }
+
       const today = new Date().toISOString().split('T')[0];
-      const classData = (dailySubmissionsDB[today] && dailySubmissionsDB[today][activeClass]) || {};
 
-      // Assessment Submit/Unsubmit Button
-      const assBtn = document.getElementById('btnSubmitAssessmentReport');
-      const assIcon = document.getElementById('btnSubmitAssIcon');
-      const assLabel = document.getElementById('btnSubmitAssLabel');
+      if (dailySubmissionsDB[today] && dailySubmissionsDB[today][targetClass] && dailySubmissionsDB[today][targetClass][type]) {
+        delete dailySubmissionsDB[today][targetClass][type];
+        
+        safeSaveLocalStorage('mws_daily_submissions', dailySubmissionsDB);
 
-      if (assBtn) {
-        if (classData['Assessment']) {
-          assBtn.className = "relative z-10 px-5 py-3 bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center space-x-2 shrink-0";
-          assIcon.className = "fa-solid fa-arrow-rotate-left text-base";
-          assLabel.textContent = "Unsubmit Assessment Report";
-        } else {
-          assBtn.className = "relative z-10 px-5 py-3 bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg transition flex items-center space-x-2 shrink-0";
-          assIcon.className = "fa-solid fa-paper-plane text-base";
-          assLabel.textContent = "Submit Today's Assessment Report";
-        }
-      }
+        pushRealtimeUpdate(`↩️ ${activeTeacher} unsubmitted ${type} Report for Class ${targetClass}`);
+        showToast(`Today's ${type} Report for ${targetClass} Unsubmitted!`);
 
-      // Attendance Submit/Unsubmit Button
-      const attBtn = document.getElementById('btnSubmitAttendanceReport');
-      const attIcon = document.getElementById('btnSubmitAttIcon');
-      const attLabel = document.getElementById('btnSubmitAttLabel');
-
-      if (attBtn) {
-        if (classData['Attendance']) {
-          attBtn.className = "h-[38px] px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition flex items-center justify-center";
-          attIcon.className = "fa-solid fa-arrow-rotate-left mr-1.5";
-          attLabel.textContent = "Unsubmit Report";
-        } else {
-          attBtn.className = "h-[38px] px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center";
-          attIcon.className = "fa-solid fa-paper-plane mr-1.5";
-          attLabel.textContent = "Submit Report";
-        }
+        renderSubmissionStatusBoard();
+        updateAssessmentSubmitStatusBadge();
+      } else {
+        showToast(`Laporan ${type} untuk ${targetClass} belum pernah disubmit hari ini!`, true);
       }
     }
 
+    /* --- STATUS BOARD HOMEPAGE --- */
     function renderSubmissionStatusBoard() {
       const today = new Date().toISOString().split('T')[0];
       const grid = document.getElementById('submissionStatusGrid');
+      if (!grid) return;
       grid.innerHTML = '';
 
       const classes = getActiveYearClassList();
@@ -2021,18 +2102,31 @@
         const attSub = cData['Attendance'];
         const assSub = cData['Assessment'];
 
+        let statusBadgeHtml = '';
+        if (attSub && assSub) {
+          statusBadgeHtml = `<span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Complete</span>`;
+        } else if (attSub || assSub) {
+          statusBadgeHtml = `<span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">In Progress (1/2)</span>`;
+        } else {
+          statusBadgeHtml = `<span class="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">Pending</span>`;
+        }
+
         const card = document.createElement('div');
-        card.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2";
+        card.className = "p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 shadow-sm hover:shadow-md transition";
         card.innerHTML = `
-          <div class="flex items-center justify-between border-b pb-2">
-            <h4 class="font-extrabold text-xs text-slate-800">${c}</h4>
-            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${attSub && assSub ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-              ${attSub && assSub ? 'Complete' : 'Pending'}
-            </span>
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2">
+            <h4 class="font-extrabold text-xs text-slate-800 tracking-wide">${c}</h4>
+            ${statusBadgeHtml}
           </div>
-          <div class="space-y-1 text-[11px]">
-            <div class="flex items-center justify-between"><span class="text-slate-500 font-semibold">Attendance:</span>${attSub ? `<span class="font-bold text-emerald-600"><i class="fa-solid fa-check mr-1"></i>${attSub.time} (${attSub.submittedBy})</span>` : `<span class="font-bold text-rose-500">Not Submitted</span>`}</div>
-            <div class="flex items-center justify-between"><span class="text-slate-500 font-semibold">Assessment:</span>${assSub ? `<span class="font-bold text-emerald-600"><i class="fa-solid fa-check mr-1"></i>${assSub.time} (${assSub.submittedBy})</span>` : `<span class="font-bold text-rose-500">Not Submitted</span>`}</div>
+          <div class="space-y-1.5 text-[11px]">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 font-semibold">Attendance:</span>
+              ${attSub ? `<span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200"><i class="fa-solid fa-check mr-1"></i>${attSub.time} (${attSub.submittedBy})</span>` : `<span class="font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">Not Submitted</span>`}
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 font-semibold">Assessment:</span>
+              ${assSub ? `<span class="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200"><i class="fa-solid fa-check mr-1"></i>${assSub.time} (${assSub.submittedBy})</span>` : `<span class="font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-100">Not Submitted</span>`}
+            </div>
           </div>
         `;
         grid.appendChild(card);
@@ -2060,10 +2154,10 @@
         }
       });
 
-      if (tabName === 'dashboard') { renderClassFilterTabs(); renderStudents(); updateSubmitButtonUI(); }
+      if (tabName === 'dashboard') { renderClassFilterTabs(); renderStudents(); updateAssessmentSubmitStatusBadge(); }
       if (tabName === 'shoutout') renderShoutouts();
       if (tabName === 'calendar') renderAcademicCalendar();
-      if (tabName === 'attendance') { renderAttendanceClassFilterTabs(); loadAttendanceForSelectedDate(); updateSubmitButtonUI(); }
+      if (tabName === 'attendance') { renderAttendanceClassFilterTabs(); loadAttendanceForSelectedDate(); }
       if (tabName === 'roster') renderRosterTable();
       if (tabName === 'analytics') renderAnalyticsChart();
     }
@@ -2072,17 +2166,15 @@
       activeClass = className;
       renderClassFilterTabs();
       renderStudents();
-      updateSubmitButtonUI();
+      updateAssessmentSubmitStatusBadge();
     }
 
     function filterAttendanceClass(className) {
       attendanceClass = className;
       renderAttendanceClassFilterTabs();
       loadAttendanceForSelectedDate();
-      updateSubmitButtonUI();
     }
 
-    /* --- DYNAMIC CALENDAR EVENTS & PDF LINK --- */
     function openAddCalendarEventModal() {
       if (activeRole === 'Director') {
         showToast("👑 Read-Only Mode: Adding events disabled.", true);
@@ -2091,9 +2183,7 @@
       document.getElementById('addCalendarEventModal').classList.remove('hidden');
     }
 
-    function closeAddCalendarEventModal() {
-      document.getElementById('addCalendarEventModal').classList.add('hidden');
-    }
+    function closeAddCalendarEventModal() { document.getElementById('addCalendarEventModal').classList.add('hidden'); }
 
     function saveCalendarEvent(e) {
       e.preventDefault();
@@ -2120,7 +2210,7 @@
       academicCalendarEvents.push(newEvent);
       safeSaveLocalStorage('mws_calendar_events', academicCalendarEvents);
 
-      pushRealtimeUpdate(`📅 ${activeTeacher} added new event to Academic Calendar: ${titleVal}`);
+      pushRealtimeUpdate(`📅 ${activeTeacher} added event: ${titleVal}`);
       showToast("Calendar event added!");
       closeAddCalendarEventModal();
       renderAcademicCalendar();
@@ -2157,15 +2247,16 @@
 
     function updateCalendarPdfButton() {
       const btn = document.getElementById('btnCalendarPdfLink');
-      if (calendarPdfUrl) {
-        btn.href = calendarPdfUrl;
-        btn.classList.remove('hidden');
-      } else {
-        btn.classList.add('hidden');
+      if (btn) {
+        if (calendarPdfUrl) {
+          btn.href = calendarPdfUrl;
+          btn.classList.remove('hidden');
+        } else {
+          btn.classList.add('hidden');
+        }
       }
     }
 
-    /* --- STUDENT DATABASE MANAGERS --- */
     function openStudentManagerModal(editStudentId = null) {
       if (activeRole === 'Director') {
         showToast("👑 Read-Only View: Editing database is disabled.", true);
@@ -2179,24 +2270,22 @@
       if (editStudentId) {
         const s = students.find(st => st.id === editStudentId);
         if (!s) return;
-        title.textContent = "✏️ Edit Student Profile";
+        if (title) title.textContent = "Edit Student Profile";
         document.getElementById('inp_student_id').value = s.id;
         document.getElementById('inp_student_name').value = s.name;
         document.getElementById('inp_student_class').value = s.class;
         document.getElementById('inp_student_level').value = s.level;
         document.getElementById('inp_student_teacher').value = s.assignedTeacher || '';
       } else {
-        title.textContent = `+ Add New Student (${currentAcademicYear})`;
-        form.reset();
+        if (title) title.textContent = `Add New Student (${currentAcademicYear})`;
+        if (form) form.reset();
         document.getElementById('inp_student_id').value = '';
       }
 
-      modal.classList.remove('hidden');
+      if (modal) modal.classList.remove('hidden');
     }
 
-    function closeStudentManagerModal() {
-      document.getElementById('studentMgmtModal').classList.add('hidden');
-    }
+    function closeStudentManagerModal() { document.getElementById('studentMgmtModal').classList.add('hidden'); }
 
     function saveStudentToDatabase(e) {
       e.preventDefault();
@@ -2230,7 +2319,7 @@
           academicYear: currentAcademicYear,
           status: sLevel === 'Graduated' ? 'Graduated' : 'Active'
         });
-        showToast(`Student ${sName} added to ${currentAcademicYear} database!`);
+        showToast(`Student ${sName} added!`);
       }
 
       safeSaveLocalStorage('mws_students_db', students);
@@ -2249,11 +2338,11 @@
         return;
       }
       const s = students.find(st => st.id === studentId);
-      if (s && confirm(`Are you sure you want to remove ${s.name} from student database?`)) {
+      if (s && confirm(`Remove ${s.name} from database?`)) {
         students = students.filter(st => st.id !== studentId);
         safeSaveLocalStorage('mws_students_db', students);
-        pushRealtimeUpdate(`🗑️ ${activeTeacher} removed a student from database`);
-        showToast(`${s.name} removed from database.`);
+        pushRealtimeUpdate(`🗑️ ${activeTeacher} removed a student`);
+        showToast(`${s.name} removed.`);
         renderClassFilterTabs();
         renderAttendanceClassFilterTabs();
         renderStudents();
@@ -2263,17 +2352,18 @@
 
     function openNewShoutoutModal() {
       const select = document.getElementById('inp_shoutout_student');
-      select.innerHTML = '';
+      if (select) {
+        select.innerHTML = '';
+        let availableStudents = getActiveYearStudents().filter(s => s.status !== 'Graduated');
+        if (activeRole === 'Teacher') availableStudents = availableStudents.filter(s => s.assignedTeacher === activeTeacher);
 
-      let availableStudents = getActiveYearStudents().filter(s => s.status !== 'Graduated');
-      if (activeRole === 'Teacher') availableStudents = availableStudents.filter(s => s.assignedTeacher === activeTeacher);
-
-      availableStudents.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = `${s.name} (${s.class})`;
-        select.appendChild(opt);
-      });
+        availableStudents.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.name} (${s.class})`;
+          select.appendChild(opt);
+        });
+      }
 
       document.getElementById('inp_shoutout_file').value = '';
       document.getElementById('shoutoutPhotoPreviewBox').classList.add('hidden');
@@ -2297,7 +2387,6 @@
 
     function saveShoutout(e) {
       if (e) e.preventDefault();
-      
       try {
         const sId = parseInt(document.getElementById('inp_shoutout_student').value);
         const category = document.getElementById('inp_shoutout_category').value;
@@ -2334,7 +2423,6 @@
         uploadedShoutoutBase64 = '';
 
         showToast(`⭐ Shoutout logged for ${student ? student.name : 'Student'}!`);
-
       } catch (err) {
         showToast("Error saving shoutout", true);
       }
@@ -2345,7 +2433,7 @@
         showToast("👑 Executive Read-Only Mode: Cannot delete shoutouts.", true);
         return;
       }
-      if (confirm("Are you sure you want to delete this shoutout log?")) {
+      if (confirm("Delete this shoutout log?")) {
         shoutoutsDB = shoutoutsDB.filter(s => s.id !== shoutoutId);
         safeSaveLocalStorage('mws_shoutouts_db', shoutoutsDB);
         pushRealtimeUpdate(`🗑️ ${activeTeacher} removed a shoutout`);
@@ -2354,18 +2442,18 @@
       }
     }
 
-    /* --- SHOUTOUT LOGS TRACKER RENDERER DENGAN FORMAT TABEL RAPI & SEJAJAR --- */
     function renderShoutouts() {
       const tbody = document.getElementById('shoutoutTableBody');
       const summaryList = document.getElementById('shoutoutSummaryList');
-      tbody.innerHTML = '';
-      summaryList.innerHTML = '';
+      if (!tbody || !summaryList) return;
+      tbody.innerHTML = ''; summaryList.innerHTML = '';
 
       const activeShoutouts = shoutoutsDB.filter(so => (so.academicYear || "2026/2027") === currentAcademicYear);
-      document.getElementById('shoutoutLogCountBadge').textContent = `${activeShoutouts.length} Logs Recorded (${currentAcademicYear})`;
+      const countBadge = document.getElementById('shoutoutLogCountBadge');
+      if (countBadge) countBadge.textContent = `${activeShoutouts.length} Logs Recorded (${currentAcademicYear})`;
 
       if (activeShoutouts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 font-medium">No shoutout records logged for ${currentAcademicYear}. Click 'Give New Shoutout' above!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 font-medium">No shoutout records logged for ${currentAcademicYear}.</td></tr>`;
       } else {
         activeShoutouts.forEach(so => {
           const tr = document.createElement('tr');
@@ -2374,26 +2462,21 @@
           let photoButtonHtml = `<span class="text-slate-400 text-[10px]">No Photo</span>`;
           if (so.photo) {
             photoButtonHtml = `
-              <a href="${so.photo}" target="_blank" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-extrabold text-[10px] transition whitespace-nowrap">
+              <a href="${so.photo}" target="_blank" class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-extrabold text-[10px] transition">
                 <i class="fa-solid fa-image text-amber-600"></i>
-                <span>Open Chat Screenshot</span>
+                <span>Open Screenshot</span>
               </a>
             `;
           }
 
           tr.innerHTML = `
-            <td class="py-3 px-3 text-slate-500 font-medium align-middle whitespace-nowrap">${so.date}</td>
-            <td class="py-3 px-3 align-middle">
-              <div class="font-bold text-slate-800 whitespace-nowrap">${so.studentName}</div>
-              <div class="text-[10px] text-slate-400 font-normal whitespace-nowrap">${so.studentClass}</div>
-            </td>
-            <td class="py-3 px-3 align-middle whitespace-nowrap">
-              <span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2.5 py-1 rounded-full inline-block">${so.category}</span>
-            </td>
-            <td class="py-3 px-3 text-slate-600 align-middle whitespace-nowrap">${so.teacher}</td>
-            <td class="py-3 px-3 text-center align-middle whitespace-nowrap">${photoButtonHtml}</td>
-            <td class="py-3 px-3 text-right align-middle whitespace-nowrap">
-              <button onclick="deleteShoutout(${so.id})" title="Delete" class="text-rose-400 hover:text-rose-600 transition p-1"><i class="fa-solid fa-trash-can"></i></button>
+            <td class="py-2.5 px-3 text-slate-500 font-medium">${so.date}</td>
+            <td class="py-2.5 px-3 font-bold text-slate-800">${so.studentName} <span class="text-[10px] text-slate-400 font-normal">(${so.studentClass})</span></td>
+            <td class="py-2.5 px-3"><span class="bg-amber-100 text-amber-900 font-extrabold text-[10px] px-2 py-0.5 rounded-full">${so.category}</span></td>
+            <td class="py-2.5 px-3 text-slate-600">${so.teacher}</td>
+            <td class="py-2.5 px-3 text-center">${photoButtonHtml}</td>
+            <td class="py-2.5 px-3 text-right">
+              <button onclick="deleteShoutout(${so.id})" title="Delete" class="text-rose-400 hover:text-rose-600 transition"><i class="fa-solid fa-trash-can"></i></button>
             </td>
           `;
           tbody.appendChild(tr);
@@ -2416,16 +2499,16 @@
     }
 
     function renderAcademicCalendar() {
-      const selectedMonth = document.getElementById('calendarMonthFilter').value;
+      const monthFilter = document.getElementById('calendarMonthFilter');
+      const selectedMonth = monthFilter ? monthFilter.value : 'ALL';
       const grid = document.getElementById('calendarEventsGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
+      if (!grid) return; grid.innerHTML = '';
 
       let yearEvents = academicCalendarEvents.filter(e => (e.academicYear || "2026/2027") === currentAcademicYear);
       let filteredEvents = yearEvents.filter(e => selectedMonth === 'ALL' || e.month === selectedMonth);
 
       if (filteredEvents.length === 0) {
-        grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 text-xs font-medium">No school events found for ${currentAcademicYear} (${selectedMonth}).</div>`;
+        grid.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 text-xs font-medium">No events found for ${currentAcademicYear} (${selectedMonth}).</div>`;
         return;
       }
 
@@ -2460,6 +2543,9 @@
     }
 
     function renderStudents() {
+      const studentsGrid = document.getElementById('studentsGrid');
+      if (!studentsGrid) return;
+
       let activeYearStudents = getActiveYearStudents().filter(s => s.status !== 'Graduated');
 
       let filtered = activeYearStudents.filter(s => {
@@ -2473,20 +2559,26 @@
 
       const termLogs = dailyLogs.filter(l => l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear);
 
-      document.getElementById('statTotalStudents').textContent = filtered.length;
-      document.getElementById('statTotalLogs').textContent = termLogs.length;
+      const statTotalStud = document.getElementById('statTotalStudents');
+      const statTotalLogs = document.getElementById('statTotalLogs');
+      const statThriving = document.getElementById('statThrivingRate');
+      const statGaps = document.getElementById('statGapsCount');
+      const showingCnt = document.getElementById('showingCount');
+
+      if (statTotalStud) statTotalStud.textContent = filtered.length;
+      if (statTotalLogs) statTotalLogs.textContent = termLogs.length;
 
       const thrivingLogs = termLogs.filter(l => l.score === 3).length;
       const thrivingRate = termLogs.length > 0 ? Math.round((thrivingLogs / termLogs.length) * 100) : 0;
-      document.getElementById('statThrivingRate').textContent = `${thrivingRate}%`;
+      if (statThriving) statThriving.textContent = `${thrivingRate}%`;
 
       const studentsWithGaps = new Set(termLogs.filter(l => l.gaps && l.gaps.trim().length > 0 && l.gaps.toLowerCase() !== 'none').map(l => l.studentId)).size;
-      document.getElementById('statGapsCount').textContent = studentsWithGaps;
-      document.getElementById('showingCount').textContent = `Showing ${filtered.length} students (${currentAcademicYear})`;
+      if (statGaps) statGaps.textContent = studentsWithGaps;
+      if (showingCnt) showingCnt.textContent = `Showing ${filtered.length} students (${currentAcademicYear})`;
 
       studentsGrid.innerHTML = '';
       if (filtered.length === 0) {
-        studentsGrid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-medium">No active students found in ${currentAcademicYear} matching current filters.</div>`;
+        studentsGrid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400 font-medium">No active students found in ${currentAcademicYear}.</div>`;
         return;
       }
 
@@ -2534,7 +2626,8 @@
     }
 
     function loadAttendanceForSelectedDate() {
-      const selectedDate = document.getElementById('att_date_picker').value;
+      const datePicker = document.getElementById('att_date_picker');
+      const selectedDate = datePicker ? datePicker.value : new Date().toISOString().split('T')[0];
       const savedForDate = attendanceDB[selectedDate] || {};
 
       currentAttendanceState = {};
@@ -2544,11 +2637,7 @@
 
       if (activeRole === 'Director' || activeRole === 'Principal') {
         const btnSave = document.getElementById('btnSaveAttendance');
-        const btnMark = document.getElementById('btnMarkPresent');
-        const btnSub = document.getElementById('btnSubmitAttendanceReport');
         if (btnSave) btnSave.classList.add('hidden');
-        if (btnMark) btnMark.classList.add('hidden');
-        if (btnSub) btnSub.classList.add('hidden');
       }
 
       renderAttendanceTable();
@@ -2570,20 +2659,10 @@
       currentAttendanceState[studentId].notes = notes;
     }
 
-    function markAllPresent() {
-      if (activeRole === 'Director' || activeRole === 'Principal') return;
-      let filtered = getActiveYearStudents().filter(s => s.class === attendanceClass && s.status !== 'Graduated');
-      filtered.forEach(s => {
-        if (!currentAttendanceState[s.id]) currentAttendanceState[s.id] = { notes: '' };
-        currentAttendanceState[s.id].status = 'Present';
-      });
-      renderAttendanceTable();
-      showToast(`Marked all students in ${attendanceClass} as Present!`);
-    }
-
     function saveAttendance() {
       if (activeRole === 'Director' || activeRole === 'Principal') return;
-      const selectedDate = document.getElementById('att_date_picker').value;
+      const datePicker = document.getElementById('att_date_picker');
+      const selectedDate = datePicker ? datePicker.value : new Date().toISOString().split('T')[0];
       attendanceDB[selectedDate] = currentAttendanceState;
       safeSaveLocalStorage('mws_attendance_db', attendanceDB);
 
@@ -2593,6 +2672,7 @@
 
     function renderAttendanceTable() {
       const tbody = document.getElementById('attendanceTableBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       let filtered = getActiveYearStudents().filter(s => {
@@ -2636,18 +2716,25 @@
         tbody.appendChild(tr);
       });
 
-      document.getElementById('att_count_present').textContent = presentCount;
-      document.getElementById('att_count_sick').textContent = sickCount;
-      document.getElementById('att_count_late').textContent = lateCount;
-      document.getElementById('att_count_absent').textContent = absentCount;
+      const pCnt = document.getElementById('att_count_present');
+      const sCnt = document.getElementById('att_count_sick');
+      const lCnt = document.getElementById('att_count_late');
+      const aCnt = document.getElementById('att_count_absent');
+      const rPercent = document.getElementById('att_rate_percent');
+
+      if (pCnt) pCnt.textContent = presentCount;
+      if (sCnt) sCnt.textContent = sickCount;
+      if (lCnt) lCnt.textContent = lateCount;
+      if (aCnt) aCnt.textContent = absentCount;
 
       const totalStudents = filtered.length;
       const rate = totalStudents > 0 ? Math.round(((presentCount + lateCount) / totalStudents) * 100) : 0;
-      document.getElementById('att_rate_percent').textContent = `${rate}%`;
+      if (rPercent) rPercent.textContent = `${rate}%`;
     }
 
     function openMonthlyRecapModal() {
-      document.getElementById('recapClassSubtitle').textContent = `Recap Summary for ${attendanceClass}`;
+      const sub = document.getElementById('recapClassSubtitle');
+      if (sub) sub.textContent = `Recap Summary for ${attendanceClass}`;
       renderMonthlyRecapTable();
       document.getElementById('monthlyRecapModal').classList.remove('hidden');
     }
@@ -2655,8 +2742,10 @@
     function closeMonthlyRecapModal() { document.getElementById('monthlyRecapModal').classList.add('hidden'); }
 
     function renderMonthlyRecapTable() {
-      const selectedMonth = document.getElementById('recap_month_picker').value;
+      const picker = document.getElementById('recap_month_picker');
+      const selectedMonth = picker ? picker.value : new Date().toISOString().substring(0, 7);
       const tbody = document.getElementById('monthlyRecapTableBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       let filteredStudents = getActiveYearStudents().filter(s => s.class === attendanceClass && s.status !== 'Graduated');
@@ -2699,21 +2788,27 @@
       const student = students.find(s => s.id === studentId);
       if (!student) return;
 
-      document.getElementById('modalStudentName').textContent = student.name;
-      document.getElementById('modalClassBadge').textContent = student.class;
-      document.getElementById('modalLevelBadge').textContent = student.level;
-      document.getElementById('modalAvatar').textContent = student.name.substring(0, 2).toUpperCase();
-      document.getElementById('formTermTag').textContent = currentTerm;
+      const sName = document.getElementById('modalStudentName');
+      const sClass = document.getElementById('modalClassBadge');
+      const sLevel = document.getElementById('modalLevelBadge');
+      const sAvatar = document.getElementById('modalAvatar');
+      const termTag = document.getElementById('formTermTag');
+
+      if (sName) sName.textContent = student.name;
+      if (sClass) sClass.textContent = student.class;
+      if (sLevel) sLevel.textContent = student.level;
+      if (sAvatar) sAvatar.textContent = student.name.substring(0, 2).toUpperCase();
+      if (termTag) termTag.textContent = currentTerm;
 
       const modalFormCol = document.getElementById('modalFormColumn');
       const modalChartsCol = document.getElementById('modalChartsColumn');
 
       if (activeRole === 'Director' || activeRole === 'Principal') {
-        modalFormCol.classList.add('hidden');
-        modalChartsCol.className = "lg:col-span-12 space-y-6";
+        if (modalFormCol) modalFormCol.classList.add('hidden');
+        if (modalChartsCol) modalChartsCol.className = "lg:col-span-12 space-y-6";
       } else {
-        modalFormCol.classList.remove('hidden');
-        modalChartsCol.className = "lg:col-span-7 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-6 space-y-5 pt-4 lg:pt-0";
+        if (modalFormCol) modalFormCol.classList.remove('hidden');
+        if (modalChartsCol) modalChartsCol.className = "lg:col-span-7 border-t lg:border-t-0 lg:border-l border-slate-200 lg:pl-6 space-y-5 pt-4 lg:pt-0";
       }
 
       document.getElementById('inp_lo').value = '';
@@ -2749,6 +2844,7 @@
 
     function renderSubjectProgressList(studentId) {
       const list = document.getElementById('subjectProgressList');
+      if (!list) return;
       list.innerHTML = '';
 
       const subjects = [
@@ -2782,6 +2878,9 @@
       const student = students.find(s => s.id === selectedStudentId);
       if (!student) return;
 
+      const aiBox = document.getElementById('aiFeedbackNarrative');
+      if (!aiBox) return;
+
       const sLogsTerm1 = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === 'Term 1' && (l.academicYear || "2026/2027") === currentAcademicYear);
       const sLogsTerm2 = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === 'Term 2' && (l.academicYear || "2026/2027") === currentAcademicYear);
       const sShoutouts = shoutoutsDB.filter(so => so.studentId === selectedStudentId && (so.academicYear || "2026/2027") === currentAcademicYear);
@@ -2789,24 +2888,24 @@
       if (currentTerm === 'Term 2') {
         const totalYearLogs = sLogsTerm1.length + sLogsTerm2.length;
         if (totalYearLogs === 0) {
-          document.getElementById('aiFeedbackNarrative').textContent = `Whole-Year Progress Synthesis (${currentAcademicYear}): No assessment logs recorded yet for ${student.name}.`;
+          aiBox.textContent = `Whole-Year Progress Synthesis (${currentAcademicYear}): No assessment logs recorded yet.`;
           return;
         }
 
         const term1Avg = sLogsTerm1.length > 0 ? (sLogsTerm1.reduce((acc, l) => acc + l.score, 0) / sLogsTerm1.length).toFixed(1) : "N/A";
         const term2Avg = sLogsTerm2.length > 0 ? (sLogsTerm2.reduce((acc, l) => acc + l.score, 0) / sLogsTerm2.length).toFixed(1) : "N/A";
 
-        let narrative = `🗓️ WHOLE-YEAR RECAP & CONTINUITY ANALYSIS (${currentAcademicYear}) for ${student.name}:\n`;
+        let narrative = `🗓️ WHOLE-YEAR RECAP (${currentAcademicYear}) for ${student.name}:\n`;
         narrative += `• Term 1: Average ${term1Avg}/3.0 (${sLogsTerm1.length} logs)\n`;
         narrative += `• Term 2: Average ${term2Avg}/3.0 (${sLogsTerm2.length} logs)\n`;
-        if (sShoutouts.length > 0) narrative += `🌟 Earned ${sShoutouts.length} special shoutout badges throughout the year!`;
+        if (sShoutouts.length > 0) narrative += `🌟 Earned ${sShoutouts.length} special shoutouts!`;
 
-        document.getElementById('aiFeedbackNarrative').textContent = narrative;
+        aiBox.textContent = narrative;
 
       } else {
         const totalLogs = sLogsTerm1.length;
         if (totalLogs === 0) {
-          document.getElementById('aiFeedbackNarrative').textContent = `${student.name} has no daily assessment logs recorded yet for ${currentTerm} (${currentAcademicYear}).`;
+          aiBox.textContent = `${student.name} has no daily assessment logs recorded yet for ${currentTerm} (${currentAcademicYear}).`;
           return;
         }
 
@@ -2815,10 +2914,10 @@
         if (avgScore >= 2.5) statusStr = "Thriving";
         else if (avgScore <= 1.5) statusStr = "Exploring";
 
-        let feedbackText = `🌟 Term 1 AI Progress Synthesis (${currentAcademicYear}): ${student.name} shows overall ${statusStr} performance with average rubric score ${avgScore}/3.0 across ${totalLogs} learning evaluations. `;
+        let feedbackText = `🌟 Term 1 Synthesis (${currentAcademicYear}): ${student.name} shows ${statusStr} performance with average rubric score ${avgScore}/3.0 across ${totalLogs} evaluations. `;
         if (sShoutouts.length > 0) feedbackText += `Earned ${sShoutouts.length} shoutouts!`;
 
-        document.getElementById('aiFeedbackNarrative').textContent = feedbackText;
+        aiBox.textContent = feedbackText;
       }
     }
 
@@ -2836,10 +2935,12 @@
       }
 
       const btnSave = document.getElementById('btnSaveLog');
-      const origContent = btnSave.innerHTML;
+      const origContent = btnSave ? btnSave.innerHTML : 'Save';
 
-      btnSave.disabled = true;
-      btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving Log...`;
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving Log...`;
+      }
 
       setTimeout(() => {
         try {
@@ -2866,7 +2967,7 @@
           dailyLogs.push(newLog);
           safeSaveLocalStorage('mws_daily_logs', dailyLogs);
 
-          pushRealtimeUpdate(`📝 ${activeTeacher} recorded assessment for ${student ? student.name : 'Student'} (${newLog.subject})`);
+          pushRealtimeUpdate(`📝 ${activeTeacher} recorded assessment for ${student ? student.name : 'Student'}`);
 
           renderModalHistoryLogs();
           renderStudentIndividualChart(selectedStudentId);
@@ -2887,23 +2988,29 @@
           uploadedEvidenceBase64 = '';
           document.querySelectorAll('input[name="rubricScore"]').forEach(r => r.checked = false);
 
-          btnSave.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> Log Saved!`;
-          btnSave.classList.remove('bg-brand-600', 'hover:bg-brand-700');
-          btnSave.classList.add('bg-emerald-600');
+          if (btnSave) {
+            btnSave.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> Log Saved!`;
+            btnSave.classList.remove('bg-brand-600', 'hover:bg-brand-700');
+            btnSave.classList.add('bg-emerald-600');
+          }
 
           showToast(`✅ Daily Assessment Saved!`);
 
           setTimeout(() => {
-            btnSave.disabled = false;
-            btnSave.innerHTML = origContent;
-            btnSave.classList.remove('bg-emerald-600');
-            btnSave.classList.add('bg-brand-600', 'hover:bg-brand-700');
+            if (btnSave) {
+              btnSave.disabled = false;
+              btnSave.innerHTML = origContent;
+              btnSave.classList.remove('bg-emerald-600');
+              btnSave.classList.add('bg-brand-600', 'hover:bg-brand-700');
+            }
           }, 1200);
 
         } catch (err) {
           showToast("Error saving log: " + err.message, true);
-          btnSave.disabled = false;
-          btnSave.innerHTML = origContent;
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = origContent;
+          }
         }
       }, 100);
     }
@@ -2934,7 +3041,9 @@
     }
 
     function renderStudentIndividualChart(studentId) {
-      const ctx = document.getElementById('studentIndividualChart').getContext('2d');
+      const el = document.getElementById('studentIndividualChart');
+      if (!el) return;
+      const ctx = el.getContext('2d');
       if (studentIndividualChartInstance) studentIndividualChartInstance.destroy();
 
       const domains = ['Spirituality', 'Imaginal', 'Rasional', 'Physical'];
@@ -2973,7 +3082,9 @@
     }
 
     function renderStudentGrowthLineChart(studentId) {
-      const ctx = document.getElementById('studentGrowthLineChart').getContext('2d');
+      const el = document.getElementById('studentGrowthLineChart');
+      if (!el) return;
+      const ctx = el.getContext('2d');
       if (studentGrowthLineChartInstance) studentGrowthLineChartInstance.destroy();
 
       const sLogs = dailyLogs.filter(l => l.studentId === studentId && l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear).sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -3010,12 +3121,13 @@
 
     function renderModalHistoryLogs() {
       const logsList = document.getElementById('modalLogsList');
+      if (!logsList) return;
       const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear).reverse();
 
       logsList.innerHTML = '';
 
       if (sLogs.length === 0) {
-        logsList.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs font-medium">No assessment logs recorded yet for ${currentTerm} (${currentAcademicYear}).</div>`;
+        logsList.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs font-medium">No assessment logs recorded yet.</div>`;
         return;
       }
 
@@ -3043,9 +3155,13 @@
       const student = students.find(s => s.id === studentId);
       if (!student) return;
 
-      document.getElementById('drawerStudentName').textContent = student.name;
-      document.getElementById('drawerStudentMeta').textContent = `${student.class} • ${student.level} • ${student.assignedTeacher || ''} (${student.academicYear || '2026/2027'})`;
-      document.getElementById('drawerAvatar').textContent = student.name.substring(0, 2).toUpperCase();
+      const drawerName = document.getElementById('drawerStudentName');
+      const drawerMeta = document.getElementById('drawerStudentMeta');
+      const drawerAvatar = document.getElementById('drawerAvatar');
+
+      if (drawerName) drawerName.textContent = student.name;
+      if (drawerMeta) drawerMeta.textContent = `${student.class} • ${student.level} • ${student.assignedTeacher || ''} (${student.academicYear || '2026/2027'})`;
+      if (drawerAvatar) drawerAvatar.textContent = student.name.substring(0, 2).toUpperCase();
 
       renderRosterDrawerLogs();
       document.getElementById('rosterLogsDrawerModal').classList.remove('hidden');
@@ -3056,10 +3172,13 @@
     function renderRosterDrawerLogs() {
       if (!selectedRosterDrawerStudentId) return;
 
-      const termVal = document.getElementById('drawerTermFilter').value;
-      const subjectVal = document.getElementById('drawerSubjectFilter').value;
+      const termFilter = document.getElementById('drawerTermFilter');
+      const subjFilter = document.getElementById('drawerSubjectFilter');
+      const termVal = termFilter ? termFilter.value : 'ALL';
+      const subjectVal = subjFilter ? subjFilter.value : 'ALL';
       const logsList = document.getElementById('drawerLogsList');
 
+      if (!logsList) return;
       logsList.innerHTML = '';
 
       let sLogs = dailyLogs.filter(l => l.studentId === selectedRosterDrawerStudentId && (l.academicYear || "2026/2027") === currentAcademicYear);
@@ -3067,10 +3186,11 @@
       if (subjectVal !== 'ALL') sLogs = sLogs.filter(l => l.subject === subjectVal);
 
       sLogs.reverse();
-      document.getElementById('drawerLogCountBadge').textContent = `Showing ${sLogs.length} logs in ${currentAcademicYear}`;
+      const countBadge = document.getElementById('drawerLogCountBadge');
+      if (countBadge) countBadge.textContent = `Showing ${sLogs.length} logs in ${currentAcademicYear}`;
 
       if (sLogs.length === 0) {
-        logsList.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs font-medium">No assessment entries found for selected filters in ${currentAcademicYear}.</div>`;
+        logsList.innerHTML = `<div class="text-center py-12 text-slate-400 text-xs font-medium">No assessment entries found.</div>`;
         return;
       }
 
@@ -3129,70 +3249,81 @@
       const student = students.find(s => s.id === selectedStudentId);
       if (!student) return;
 
-      document.getElementById('rptStudentName').textContent = student.name;
-      document.getElementById('rptStudentClass').textContent = `${student.class} (${student.level})`;
-      document.getElementById('rptAssignedTeacher').textContent = student.assignedTeacher || 'Homeroom Teacher';
-      document.getElementById('rptTermTag').textContent = currentTerm;
-      document.getElementById('rptTeacherSign').textContent = student.assignedTeacher || 'Homeroom Teacher';
+      const rptName = document.getElementById('rptStudentName');
+      const rptClass = document.getElementById('rptStudentClass');
+      const rptTeacher = document.getElementById('rptAssignedTeacher');
+      const rptTerm = document.getElementById('rptTermTag');
+      const rptSign = document.getElementById('rptTeacherSign');
+      const rptAtt = document.getElementById('rptStudentAttendance');
+
+      if (rptName) rptName.textContent = student.name;
+      if (rptClass) rptClass.textContent = `${student.class} (${student.level})`;
+      if (rptTeacher) rptTeacher.textContent = student.assignedTeacher || 'Homeroom Teacher';
+      if (rptTerm) rptTerm.textContent = currentTerm;
+      if (rptSign) rptSign.textContent = student.assignedTeacher || 'Homeroom Teacher';
 
       const sShoutoutsCount = shoutoutsDB.filter(so => so.studentId === selectedStudentId && (so.academicYear || "2026/2027") === currentAcademicYear).length;
-      document.getElementById('rptStudentAttendance').textContent = `${sShoutoutsCount} Shoutouts Earned`;
+      if (rptAtt) rptAtt.textContent = `${sShoutoutsCount} Shoutouts Earned`;
 
       const rptSubTbody = document.getElementById('rptSubjectTableBody');
-      rptSubTbody.innerHTML = '';
+      if (rptSubTbody) {
+        rptSubTbody.innerHTML = '';
+        const subjects = [
+          'Numeracy', 'Literacy Bahasa', 'Literacy English', 'Creativity', 
+          'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor', 'Spirituality'
+        ];
 
-      const subjects = [
-        'Numeracy', 'Literacy Bahasa', 'Literacy English', 'Creativity', 
-        'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor', 'Spirituality'
-      ];
+        const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear);
 
-      const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear);
+        subjects.forEach(subj => {
+          const matching = sLogs.filter(l => l.subject === subj);
+          let countText = matching.length;
+          let avgText = "N/A";
+          let statusBadge = `<span class="text-slate-400 font-normal">Not evaluated</span>`;
 
-      subjects.forEach(subj => {
-        const matching = sLogs.filter(l => l.subject === subj);
-        let countText = matching.length;
-        let avgText = "N/A";
-        let statusBadge = `<span class="text-slate-400 font-normal">Not evaluated</span>`;
+          if (matching.length > 0) {
+            const avg = (matching.reduce((sum, l) => sum + l.score, 0) / matching.length).toFixed(1);
+            avgText = `${avg} / 3.0`;
+            
+            if (avg >= 2.5) statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Thriving</span>`;
+            else if (avg >= 1.8) statusBadge = `<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px]">Emerging</span>`;
+            else statusBadge = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">Exploring</span>`;
+          }
 
-        if (matching.length > 0) {
-          const avg = (matching.reduce((sum, l) => sum + l.score, 0) / matching.length).toFixed(1);
-          avgText = `${avg} / 3.0`;
-          
-          if (avg >= 2.5) statusBadge = `<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">Thriving</span>`;
-          else if (avg >= 1.8) statusBadge = `<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px]">Emerging</span>`;
-          else statusBadge = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">Exploring</span>`;
-        }
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50";
-        tr.innerHTML = `
-          <td class="py-2 px-2 font-bold text-slate-800">${subj}</td>
-          <td class="py-2 px-2 text-center font-bold text-slate-600">${countText}</td>
-          <td class="py-2 px-2 text-center font-bold text-brand-700">${avgText}</td>
-          <td class="py-2 px-2">${statusBadge}</td>
-        `;
-        rptSubTbody.appendChild(tr);
-      });
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-50";
+          tr.innerHTML = `
+            <td class="py-2 px-2 font-bold text-slate-800">${subj}</td>
+            <td class="py-2 px-2 text-center font-bold text-slate-600">${countText}</td>
+            <td class="py-2 px-2 text-center font-bold text-brand-700">${avgText}</td>
+            <td class="py-2 px-2">${statusBadge}</td>
+          `;
+          rptSubTbody.appendChild(tr);
+        });
+      }
 
       const obsContainer = document.getElementById('rptObservationList');
-      obsContainer.innerHTML = '';
+      if (obsContainer) {
+        obsContainer.innerHTML = '';
+        const sLogs = dailyLogs.filter(l => l.studentId === selectedStudentId && l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear);
 
-      if (sLogs.length === 0) {
-        obsContainer.innerHTML = `<p class="text-slate-400 italic">No formal daily observations recorded for this term yet.</p>`;
-      } else {
-        sLogs.reverse().slice(0, 6).forEach(l => {
-          const div = document.createElement('div');
-          div.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-200";
-          div.innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-              <strong class="text-slate-800">[${l.domain || 'Domain'}] ${l.subject}: ${l.lo}</strong>
-              ${getRubricBadge(l.score)}
-            </div>
-            <p class="text-slate-600 text-[11px]">${l.comments || 'Demonstrates active participation and enthusiastic learning.'}</p>
-            ${l.gaps && l.gaps.toLowerCase() !== 'none' ? `<p class="text-amber-700 text-[10px] font-bold mt-1"><i class="fa-solid fa-bullseye mr-1"></i>Focus Area: ${l.gaps}</p>` : ''}
-          `;
-          obsContainer.appendChild(div);
-        });
+        if (sLogs.length === 0) {
+          obsContainer.innerHTML = `<p class="text-slate-400 italic">No formal daily observations recorded.</p>`;
+        } else {
+          sLogs.reverse().slice(0, 6).forEach(l => {
+            const div = document.createElement('div');
+            div.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-200";
+            div.innerHTML = `
+              <div class="flex justify-between items-center mb-1">
+                <strong class="text-slate-800">[${l.domain || 'Domain'}] ${l.subject}: ${l.lo}</strong>
+                ${getRubricBadge(l.score)}
+              </div>
+              <p class="text-slate-600 text-[11px]">${l.comments || 'Demonstrates active participation.'}</p>
+              ${l.gaps && l.gaps.toLowerCase() !== 'none' ? `<p class="text-amber-700 text-[10px] font-bold mt-1"><i class="fa-solid fa-bullseye mr-1"></i>Focus Area: ${l.gaps}</p>` : ''}
+            `;
+            obsContainer.appendChild(div);
+          });
+        }
       }
 
       renderParentReportRadar(selectedStudentId);
@@ -3202,7 +3333,9 @@
     function closeParentReportModal() { document.getElementById('parentReportModal').classList.add('hidden'); }
 
     function renderParentReportRadar(studentId) {
-      const ctx = document.getElementById('rptRadarChart').getContext('2d');
+      const el = document.getElementById('rptRadarChart');
+      if (!el) return;
+      const ctx = el.getContext('2d');
       if (rptRadarChartInstance) rptRadarChartInstance.destroy();
 
       const domains = ['Spirituality', 'Imaginal', 'Rasional', 'Physical'];
@@ -3242,6 +3375,7 @@
 
     function renderRosterTable() {
       const tbody = document.getElementById('rosterTableBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
       let activeYearStudents = getActiveYearStudents();
@@ -3274,7 +3408,8 @@
     }
 
     function renderAnalyticsChart() {
-      const analyticsScopeClass = document.getElementById('analyticsClassFilter').value;
+      const scopeFilt = document.getElementById('analyticsClassFilter');
+      const analyticsScopeClass = scopeFilt ? scopeFilt.value : 'ALL';
       
       let scopeStudents = getActiveYearStudents().filter(s => s.status !== 'Graduated');
       if (analyticsScopeClass !== 'ALL') {
@@ -3284,81 +3419,87 @@
 
       const currentLogs = dailyLogs.filter(l => scopeStudentIds.has(l.studentId) && l.term === currentTerm && (l.academicYear || "2026/2027") === currentAcademicYear);
 
-      // Populate Class Scope Dropdown
-      const selectClass = document.getElementById('analyticsClassFilter');
-      const currentSelected = selectClass.value;
-      selectClass.innerHTML = `<option value="ALL">All Active Students (School Wide)</option>`;
-      getActiveYearClassList().forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = `${c} Class`;
-        selectClass.appendChild(opt);
-      });
-      selectClass.value = currentSelected;
+      if (scopeFilt) {
+        const currentSelected = scopeFilt.value;
+        scopeFilt.innerHTML = `<option value="ALL">All Active Students (School Wide)</option>`;
+        getActiveYearClassList().forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c;
+          opt.textContent = `${c} Class`;
+          scopeFilt.appendChild(opt);
+        });
+        scopeFilt.value = currentSelected;
+      }
 
       // 1. CHART DOMAIN
-      const ctxDomain = document.getElementById('domainAnalyticsChart').getContext('2d');
-      if (analyticsChartInstance) analyticsChartInstance.destroy();
+      const elDomain = document.getElementById('domainAnalyticsChart');
+      if (elDomain) {
+        const ctxDomain = elDomain.getContext('2d');
+        if (analyticsChartInstance) analyticsChartInstance.destroy();
 
-      const domains = ['Spirituality', 'Imaginal', 'Rasional', 'Physical'];
-      const domainAverages = domains.map(dom => {
-        const domLogs = currentLogs.filter(l => l.domain === dom);
-        if (domLogs.length === 0) return 0;
-        const sum = domLogs.reduce((acc, l) => acc + l.score, 0);
-        return parseFloat((sum / domLogs.length).toFixed(2));
-      });
+        const domains = ['Spirituality', 'Imaginal', 'Rasional', 'Physical'];
+        const domainAverages = domains.map(dom => {
+          const domLogs = currentLogs.filter(l => l.domain === dom);
+          if (domLogs.length === 0) return 0;
+          const sum = domLogs.reduce((acc, l) => acc + l.score, 0);
+          return parseFloat((sum / domLogs.length).toFixed(2));
+        });
 
-      const domainBarColors = domainAverages.map(val => val === 0 ? '#CBD5E1' : val < 1.8 ? '#F59E0B' : val < 2.5 ? '#3B82F6' : '#10B981');
+        const domainBarColors = domainAverages.map(val => val === 0 ? '#CBD5E1' : val < 1.8 ? '#F59E0B' : val < 2.5 ? '#3B82F6' : '#10B981');
 
-      analyticsChartInstance = new Chart(ctxDomain, {
-        type: 'bar',
-        data: {
-          labels: domains,
-          datasets: [{
-            label: `Average Score`,
-            data: domainAverages,
-            backgroundColor: domainBarColors,
-            borderRadius: 10
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { min: 0, max: 3, ticks: { stepSize: 0.5 } } },
-          plugins: { legend: { display: false } }
-        }
-      });
+        analyticsChartInstance = new Chart(ctxDomain, {
+          type: 'bar',
+          data: {
+            labels: domains,
+            datasets: [{
+              label: `Average Score`,
+              data: domainAverages,
+              backgroundColor: domainBarColors,
+              borderRadius: 10
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { min: 0, max: 3, ticks: { stepSize: 0.5 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
 
       // 2. CHART PER-SUBJECT
-      const ctxSubject = document.getElementById('subjectAnalyticsChart').getContext('2d');
-      if (subjectChartInstance) subjectChartInstance.destroy();
+      const elSubject = document.getElementById('subjectAnalyticsChart');
+      if (elSubject) {
+        const ctxSubject = elSubject.getContext('2d');
+        if (subjectChartInstance) subjectChartInstance.destroy();
 
-      const subjects = ['Numeracy', 'Literacy Bahasa', 'Literacy English', 'Creativity', 'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor', 'Spirituality'];
-      const subjectAverages = subjects.map(subj => {
-        const subjLogs = currentLogs.filter(l => l.subject === subj);
-        if (subjLogs.length === 0) return 0;
-        const sum = subjLogs.reduce((acc, l) => acc + l.score, 0);
-        return parseFloat((sum / subjLogs.length).toFixed(2));
-      });
+        const subjects = ['Numeracy', 'Literacy Bahasa', 'Literacy English', 'Creativity', 'Behaviour', 'Social Emotional', 'Fine Motor', 'Gross Motor', 'Spirituality'];
+        const subjectAverages = subjects.map(subj => {
+          const subjLogs = currentLogs.filter(l => l.subject === subj);
+          if (subjLogs.length === 0) return 0;
+          const sum = subjLogs.reduce((acc, l) => acc + l.score, 0);
+          return parseFloat((sum / subjLogs.length).toFixed(2));
+        });
 
-      subjectChartInstance = new Chart(ctxSubject, {
-        type: 'bar',
-        data: {
-          labels: ['Num', 'Lit ID', 'Lit EN', 'Create', 'Behav', 'Social', 'Fine M', 'Gross M', 'Spirit'],
-          datasets: [{
-            label: 'Subject Level',
-            data: subjectAverages,
-            backgroundColor: '#8B5CF6',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { min: 0, max: 3, ticks: { stepSize: 0.5 } } },
-          plugins: { legend: { display: false } }
-        }
-      });
+        subjectChartInstance = new Chart(ctxSubject, {
+          type: 'bar',
+          data: {
+            labels: ['Num', 'Lit ID', 'Lit EN', 'Create', 'Behav', 'Social', 'Fine M', 'Gross M', 'Spirit'],
+            datasets: [{
+              label: 'Subject Level',
+              data: subjectAverages,
+              backgroundColor: '#8B5CF6',
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { min: 0, max: 3, ticks: { stepSize: 0.5 } } },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
     }
 
     function exportDataJSON() {
@@ -3416,101 +3557,13 @@
 
           pushRealtimeUpdate("Data restored from JSON backup file!");
           showToast("Dashboard data restored successfully!");
-          renderClassFilterTabs();
-          renderAttendanceClassFilterTabs();
-          renderStudents();
-          renderRosterTable();
-          renderSubmissionStatusBoard();
-          renderTeacherEmotionRecap();
-          renderShoutouts();
-          renderAcademicCalendar();
-          updateCalendarPdfButton();
-          updateSubmitButtonUI();
+          reloadLocalStorageState();
         } catch (err) {
           showToast("Invalid backup file format.", true);
         }
       };
-      if (event.target.files[0]) fileReader.readAsText(event.target.files[0]);
+      if (event.target.files && event.target.files[0]) fileReader.readAsText(event.target.files[0]);
     }
-
-    async function loginWithGoogle() {
-  if (!firebase.apps.length || !firebase.auth) {
-    alert("Firebase Auth belum diinisialisasi dengan benar.");
-    return;
-  }
-
-  const provider = new firebase.auth.GoogleAuthProvider();
-  // Memaksa Google menampilkan pop-up pilih akun setiap kali diklik
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  try {
-    const result = await firebase.auth().signInWithPopup(provider);
-    const user = result.user;
-
-    // 1. Validasi Domain Email Sekolah
-    if (!user.email.endsWith('@millennia21.id')) {
-      alert('Akses ditolak! Anda harus menggunakan email domain @millennia21.id');
-      await firebase.auth().signOut();
-      return;
-    }
-
-    const userName = (user.displayName || user.email).toLowerCase();
-    let matchedProfile = null;
-
-    // 2. Cocokkan Nama Google dengan Daftar Profil Guru (teacherSecurity)
-    if (typeof teacherSecurity !== 'undefined') {
-      for (let teacherName in teacherSecurity) {
-        if (userName.includes(teacherName.toLowerCase()) || teacherName.toLowerCase().includes(userName)) {
-          matchedProfile = teacherName;
-          break;
-        }
-      }
-    }
-
-    // 3. Set Akun Aktif
-    if (matchedProfile) {
-      if (typeof setTeacherActive === 'function') {
-        setTeacherActive(matchedProfile);
-      } else {
-        localStorage.setItem('mws_active_user', matchedProfile);
-      }
-      if (typeof showToast === 'function') {
-        showToast(`Login Berhasil! Masuk sebagai ${matchedProfile}`);
-      }
-    } else {
-      activeTeacher = user.displayName || user.email;
-      localStorage.setItem('mws_active_user', activeTeacher);
-      if (typeof showToast === 'function') {
-        showToast("Berhasil login sebagai " + user.email);
-      }
-    }
-
-  } catch (error) {
-    console.error("Google Auth Error:", error);
-    alert("Gagal Login Google: " + error.message);
-  }
-}
-
-    // Dengarkan Perubahan Data Cloud Firestore Realtime Across Devices
-function listenToCloudChanges() {
-  if (!db) return;
-
-  // Realtime Sync Assessment Data
-  db.collection("assessments").onSnapshot((snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      if (change.type === "added" || change.type === "modified") {
-        console.log("Data cloud diperbarui dari device lain:", change.doc.data());
-        // Reload UI / render tabel secara otomatis
-        if (typeof renderStudentsGrid === 'function') renderStudentsGrid();
-      }
-    });
-  });
-}
-
-// Jalankan listener saat halaman pertama kali dimuat
-document.addEventListener("DOMContentLoaded", () => {
-  listenToCloudChanges();
-});
   </script>
 </body>
 </html>
