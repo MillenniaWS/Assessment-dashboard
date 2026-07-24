@@ -396,10 +396,10 @@
             <!-- CLOUD STATUS -->
             <div
               id="cloudStatusBadge"
-              class="hidden sm:flex items-center space-x-1.5 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200 text-xs text-emerald-700 font-bold"
+              class="hidden sm:flex items-center space-x-1.5 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 text-xs text-amber-700 font-bold"
             >
               <i class="fa-solid fa-cloud text-xs animate-pulse"></i>
-              <span class="text-[10px]">Cloud Live</span>
+              <span class="text-[10px]">Connecting…</span>
             </div>
 
             <div
@@ -1602,7 +1602,7 @@
 
           <div class="flex items-center justify-center space-x-2 text-xs text-slate-600">
             <input type="checkbox" id="chkRememberDevice" class="rounded text-brand-600 focus:ring-brand-500" />
-            <label for="chkRememberDevice" class="font-medium cursor-pointer">Remember PIN on this device</label>
+            <label for="chkRememberDevice" class="font-medium cursor-pointer">Remember teacher on this device</label>
           </div>
 
           <div id="passcodeError" class="text-xs font-bold text-rose-500 hidden">Incorrect PIN Code!</div>
@@ -2157,8 +2157,8 @@
 
     <script>
       const teacherSecurity = {
-        "Ms. Mahrukh (Director)": { pass: "8888", class: "ALL", role: "Director" },
-        "Ms. Latifah (Principal)": { pass: "9999", class: "ALL", role: "Principal" },
+        "Ms. Mahrukh (Director)": { pass: "1604", class: "ALL", role: "Director" },
+        "Ms. Latifah (Principal)": { pass: "0710", class: "ALL", role: "Principal" },
         "Tr Nanda": { pass: "1801", class: "DJEBEL CHELIA", role: "Teacher" },
         "Tr Afi": { pass: "0805", class: "DJEBEL CHELIA", role: "Teacher" },
         "Tr Widya": { pass: "1708", class: "SNOWDON", role: "Teacher" },
@@ -2448,13 +2448,63 @@
       let uploadedEvidenceBase64 = "";
       let uploadedShoutoutBase64 = "";
       let currentAttendanceState = {};
+      let cloudReady = false;
+      let cloudWritePending = false;
+      let cloudSaveTimer = null;
 
-      // FIRESTORE LIVE SYNC SAFEGUARD
+      function updateCloudStatus(state, label) {
+        const badge = document.getElementById("cloudStatusBadge");
+        if (!badge) return;
+
+        const states = {
+          connecting: {
+            classes: ["bg-amber-50", "border-amber-200", "text-amber-700"],
+            icon: "fa-solid fa-cloud-arrow-up text-xs animate-pulse",
+            text: "Connecting…",
+          },
+          saving: {
+            classes: ["bg-blue-50", "border-blue-200", "text-blue-700"],
+            icon: "fa-solid fa-cloud-arrow-up text-xs animate-pulse",
+            text: "Saving…",
+          },
+          live: {
+            classes: ["bg-emerald-50", "border-emerald-200", "text-emerald-700"],
+            icon: "fa-solid fa-cloud text-xs",
+            text: "Cloud Live",
+          },
+          offline: {
+            classes: ["bg-slate-100", "border-slate-200", "text-slate-600"],
+            icon: "fa-solid fa-cloud-slash text-xs",
+            text: "Offline",
+          },
+          error: {
+            classes: ["bg-rose-50", "border-rose-200", "text-rose-700"],
+            icon: "fa-solid fa-triangle-exclamation text-xs",
+            text: "Sync Error",
+          },
+        };
+
+        const selected = states[state] || states.connecting;
+        badge.className =
+          "hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold";
+        selected.classes.forEach((className) => badge.classList.add(className));
+
+        const icon = badge.querySelector("i");
+        const text = badge.querySelector("span");
+        if (icon) icon.className = selected.icon;
+        if (text) text.textContent = label || selected.text;
+      }
+
+      // One shared Firestore document keeps the existing dashboard data model
+      // compatible while broadcasting updates to every open device.
       try {
         if (typeof db !== "undefined" && db) {
-          db.collection("mws_school_data")
-            .doc("main_store")
+          updateCloudStatus("connecting");
+          const cloudDocument = db.collection("mws_school_data").doc("main_store");
+
+          cloudDocument
             .onSnapshot(
+              { includeMetadataChanges: true },
               (doc) => {
                 if (doc.exists) {
                   const data = doc.data();
@@ -2477,46 +2527,75 @@
                   localStorage.setItem("mws_calendar_events", JSON.stringify(academicCalendarEvents));
                   localStorage.setItem("mws_calendar_pdf_url", calendarPdfUrl);
                   localStorage.setItem("mws_notifications_db", JSON.stringify(notificationsDB));
-
-                  const cloudBadge = document.getElementById("cloudStatusBadge");
-                  if (cloudBadge) cloudBadge.classList.remove("hidden");
-
                   reloadLocalStorageState();
+                }
+
+                cloudReady = true;
+                updateCloudStatus(doc.metadata.hasPendingWrites ? "saving" : "live");
+
+                if (cloudWritePending) {
+                  cloudWritePending = false;
+                  saveToCloud();
+                } else if (!doc.exists) {
+                  saveToCloud();
                 }
               },
               (error) => {
                 console.error("Firestore cloud sync error:", error);
+                cloudReady = false;
+                updateCloudStatus("error", error && error.code === "permission-denied" ? "Access Denied" : "Sync Error");
               },
             );
+        } else {
+          updateCloudStatus("error", "Cloud Unavailable");
         }
       } catch (e) {
-        console.warn("Firestore not connected.");
+        console.error("Firestore not connected:", e);
+        updateCloudStatus("error", "Cloud Unavailable");
       }
 
       function saveToCloud() {
-        try {
-          if (typeof db !== "undefined" && db) {
-            db.collection("mws_school_data")
-              .doc("main_store")
-              .set(
-                {
-                  students: students,
-                  dailyLogs: dailyLogs,
-                  attendanceDB: attendanceDB,
-                  shoutoutsDB: shoutoutsDB,
-                  dailySubmissionsDB: dailySubmissionsDB,
-                  teacherEmotionsDB: teacherEmotionsDB,
-                  academicCalendarEvents: academicCalendarEvents,
-                  calendarPdfUrl: calendarPdfUrl,
-                  notificationsDB: notificationsDB,
-                  lastUpdatedBy: activeTeacher || "System",
-                  updatedAt: new Date().toISOString(),
-                },
-                { merge: true },
-              )
-              .catch((err) => console.error("Cloud save error:", err));
-          }
-        } catch (e) {}
+        if (typeof db === "undefined" || !db) {
+          updateCloudStatus("error", "Cloud Unavailable");
+          return;
+        }
+
+        if (!cloudReady) {
+          cloudWritePending = true;
+          updateCloudStatus("connecting");
+          return;
+        }
+
+        clearTimeout(cloudSaveTimer);
+        updateCloudStatus("saving");
+        cloudSaveTimer = setTimeout(() => {
+          db.collection("mws_school_data")
+            .doc("main_store")
+            .set(
+              {
+                students: students,
+                dailyLogs: dailyLogs,
+                attendanceDB: attendanceDB,
+                shoutoutsDB: shoutoutsDB,
+                dailySubmissionsDB: dailySubmissionsDB,
+                teacherEmotionsDB: teacherEmotionsDB,
+                academicCalendarEvents: academicCalendarEvents,
+                calendarPdfUrl: calendarPdfUrl,
+                notificationsDB: notificationsDB,
+                lastUpdatedBy: activeTeacher || "System",
+                updatedAt: new Date().toISOString(),
+              },
+              { merge: true },
+            )
+            .then(() => updateCloudStatus("live"))
+            .catch((error) => {
+              console.error("Cloud save error:", error);
+              updateCloudStatus(
+                "error",
+                error && error.code === "permission-denied" ? "Access Denied" : "Save Failed",
+              );
+            });
+        }, 250);
       }
 
       document.addEventListener("DOMContentLoaded", () => {
@@ -2546,6 +2625,8 @@
         document.addEventListener("visibilitychange", () => {
           if (document.visibilityState === "visible") checkDayChangeAutoReset();
         });
+        window.addEventListener("offline", () => updateCloudStatus("offline"));
+        window.addEventListener("online", () => updateCloudStatus(cloudReady ? "live" : "connecting"));
 
         document.addEventListener("click", (e) => {
           const notifDropdown = document.getElementById("notifDropdown");
@@ -2929,66 +3010,72 @@
       }
 
       function selectTeacherFromList(teacherName) {
-        currentTeacher = teacherName;
-        currentRole = getRoleFromTeacherName(teacherName);
+        if (!teacherSecurity[teacherName]) {
+          showToast("Teacher profile was not found.", true);
+          return;
+        }
 
-        // Show PIN modal
-        document.getElementById("username_hidden").value = teacherName;
-        document.getElementById("pinModalTeacherName").textContent = `${teacherName} - Enter PIN`;
-        document.getElementById("passcodeModal").classList.remove("hidden");
-        document.getElementById("chooseAccountModal").classList.add("hidden");
+        selectedTeacherCandidate = teacherName;
+        closeChooseAccountModal();
 
-        // ===== NEW CODE =====
-        // Start real-time listeners after login
-        setupRealtimeListeners();
+        const userHidden = document.getElementById("username_hidden");
+        const pinTitle = document.getElementById("pinModalTeacherName");
+        const passcodeInput = document.getElementById("inp_passcode");
+        const errorBox = document.getElementById("passcodeError");
+        const rememberDevice = document.getElementById("chkRememberDevice");
+        const modal = document.getElementById("passcodeModal");
 
-        // Load initial data
-        loadNotifications();
-        loadTeacherEmotions();
-        loadSubmissionStatuses();
-        loadShoutouts();
-        // ===== END NEW CODE =====
+        if (userHidden) userHidden.value = teacherName;
+        if (pinTitle) pinTitle.textContent = `Enter PIN for ${teacherName}`;
+        if (passcodeInput) passcodeInput.value = "";
+        if (errorBox) errorBox.classList.add("hidden");
+        if (rememberDevice) {
+          rememberDevice.checked = localStorage.getItem("mws_remembered_teacher") === teacherName;
+        }
+        if (modal) modal.classList.remove("hidden");
+        if (passcodeInput) passcodeInput.focus();
       }
 
       function verifyPasscode(event) {
-        event.preventDefault();
+        if (event) event.preventDefault();
 
-        const passcode = document.getElementById("inp_passcode").value;
-        const username = document.getElementById("username_hidden").value;
+        const passcodeInput = document.getElementById("inp_passcode");
+        const rememberDevice = document.getElementById("chkRememberDevice");
+        const username =
+          selectedTeacherCandidate || document.getElementById("username_hidden").value;
+        const profile = teacherSecurity[username];
+        const passcode = passcodeInput ? passcodeInput.value : "";
 
-        // Simple PIN check (change PIN codes as needed)
-        const validPINs = {
-          "Ms. Mahrukh (Director)": "1604",
-          "Ms. Latifah (Principal)": "0710",
-          "Tr Nanda": "1801",
-          "Tr Afi": "0805",
-          "Tr Widya": "1708",
-          "Tr Sindy": "1304",
-          "Tr Yunda": "2910",
-          "Tr Diya": "0506",
-        };
+        if (profile && profile.pass === passcode) {
+          if (rememberDevice && rememberDevice.checked) {
+            localStorage.setItem("mws_remembered_teacher", username);
+          } else if (localStorage.getItem("mws_remembered_teacher") === username) {
+            localStorage.removeItem("mws_remembered_teacher");
+          }
 
-        if (validPINs[username] === passcode) {
-          // Success!
-          closeModal("passcodeModal");
+          activeTeacher = username;
+          activeRole = profile.role;
+          selectedTeacherCandidate = null;
+          sessionStorage.setItem("mws_active_teacher", activeTeacher);
+          sessionStorage.setItem("mws_active_role", activeRole);
 
-          // Update UI
-          const roleIcon = document.getElementById("accountRoleIcon");
-          const roleLabel = document.getElementById("activeTeacherLabel");
+          document.getElementById("passcodeModal").classList.add("hidden");
+          if (passcodeInput) passcodeInput.value = "";
+          applyTeacherProfile(activeTeacher);
+          showToast(`Logged in as ${activeTeacher}`);
 
-          roleIcon.className = "fa-solid fa-user-check text-emerald-500 text-xs";
-          roleLabel.textContent = `✅ ${currentTeacher}`;
-          roleLabel.className = "font-extrabold text-emerald-600 text-[11px] sm:text-xs";
+          const todayStr = new Date().toISOString().split("T")[0];
+          const alreadyCheckedInToday = teacherEmotionsDB.some(
+            (item) => item.teacher === activeTeacher && item.date === todayStr,
+          );
 
-          showToastNotification(`✅ Welcome back, ${currentTeacher}!`, "success");
-
-          // ===== KEY PART: THIS STARTS EVERYTHING =====
-          setupRealtimeListeners();
-          loadNotifications();
-          loadTeacherEmotions();
-          loadSubmissionStatuses();
-          loadShoutouts();
-          // ===== END KEY PART =====
+          if (!alreadyCheckedInToday) {
+            const greeting = document.getElementById("emotionCheckinGreeting");
+            if (greeting) greeting.textContent = `Hi ${activeTeacher}! How are you feeling today?`;
+            document.getElementById("emotionCheckinModal").classList.remove("hidden");
+          } else {
+            switchTab("dashboard");
+          }
         } else {
           document.getElementById("passcodeError").classList.remove("hidden");
         }
@@ -4904,10 +4991,5 @@
         if (event.target.files && event.target.files[0]) fileReader.readAsText(event.target.files[0]);
       }
     </script>
-    <!-- App Helpers (UI & Modal Management) - LOAD FIRST -->
-    <script src="app-helpers.js"></script>
-
-    <!-- Firestore Handlers (Real-time Sync & Data Management) - LOAD SECOND -->
-    <script src="firestore-handlers.js"></script>
   </body>
 </html>
